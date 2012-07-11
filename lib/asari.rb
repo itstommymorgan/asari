@@ -50,10 +50,21 @@ class Asari
   #
   # Raises: SearchException if there's an issue communicating the request to
   #   the server.
-  def search(term)
+  def search(term, options = {})
     return [] if self.class.mode == :sandbox
 
     url = "http://search-#{search_domain}.us-east-1.cloudsearch.amazonaws.com/#{api_version}/search?q=#{CGI.escape(term)}"
+
+    if options[:page_size]
+      url << "&size=#{options[:page_size]}"
+    end
+
+    if options[:page]
+      size = options[:page_size] || 10
+      start = (options[:page] - 1) * size + 1
+      url << "&start=#{start}"
+    end
+
     begin
       response = HTTParty.get(url)
     rescue Exception => e

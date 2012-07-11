@@ -100,8 +100,8 @@ class Asari
       #
       # Raises: an Asari::SearchException error if there are issues
       #   communicating with the CloudSearch server.
-      def asari_find(term)
-        ids = self.asari_instance.search(term).map { |id| id.to_i }
+      def asari_find(term, options = {})
+        ids = self.asari_instance.search(term, options).map { |id| id.to_i }
         begin
           self.find(*ids)
         rescue ::ActiveRecord::RecordNotFound

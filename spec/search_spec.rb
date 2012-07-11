@@ -18,6 +18,16 @@ describe Asari do
       @asari.search("testsearch!")
     end
 
+    it "honors the page_size option" do
+      HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=testsearch&size=20")
+      @asari.search("testsearch", :page_size => 20)
+    end
+
+    it "honors the page option" do
+      HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=testsearch&size=20&start=41")
+      @asari.search("testsearch", :page_size => 20, :page => 3)
+    end
+
     it "returns a list of document IDs for search results." do
       expect(@asari.search("testsearch")).to eq(["123","456"])
     end
@@ -36,5 +46,6 @@ describe Asari do
       HTTParty.stub(:get).and_raise(SocketError.new)
       expect { @asari.search("testsearch)") }.to raise_error Asari::SearchException
     end
+
   end
 end

@@ -2,7 +2,7 @@ class Asari
   # Public: This module should be included in any class inheriting from
   # ActiveRecord::Base that needs to be indexed. Every time this module is
   # included, asari_index *must* be called (see below). Including this module
-  # will automatically create before_delete, after_create, and after_update AR
+  # will automatically create before_destroy, after_create, and after_update AR
   # callbacks to remove, add, and update items in the CloudSearch index
   # (respectively).
   #
@@ -11,7 +11,7 @@ class Asari
       base.extend(ClassMethods)
 
       base.class_eval do
-        before_delete :asari_remove_from_index
+        before_destroy :asari_remove_from_index
         after_create :asari_add_to_index
         after_update :asari_update_in_index
       end

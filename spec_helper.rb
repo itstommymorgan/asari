@@ -29,8 +29,8 @@ end
 
 class ActiveRecordFake
   class << self
-    def before_delete(sym)
-      @before_delete = sym
+    def before_destroy(sym)
+      @before_destroy = sym
     end
 
     def after_create(sym)

@@ -8,8 +8,8 @@ describe Asari do
         ActiveRecordFake.instance_variable_set(:@asari, @asari)
       end
 
-      it "correctly sets up a before_delete listener" do
-        expect(ActiveRecordFake.instance_variable_get(:@before_delete)).to eq(:asari_remove_from_index)
+      it "correctly sets up a before_destroy listener" do
+        expect(ActiveRecordFake.instance_variable_get(:@before_destroy)).to eq(:asari_remove_from_index)
       end
 
       it "correctly sets up an after_create listener" do

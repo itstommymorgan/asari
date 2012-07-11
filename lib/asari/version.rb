@@ -1,3 +1,3 @@
-module Asari
-  VERSION = "0.0.1"
+class Asari
+  VERSION = "0.1.0"
 end

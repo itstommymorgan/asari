@@ -69,7 +69,7 @@ class Asari
         end
         self.asari_instance.add_item(obj.send(:id), data)
       rescue Asari::DocumentUpdateException => e
-        asari_on_error(e)
+        self.asari_on_error(e)
       end
 
       # Internal: method for updating a freshly edited item to the CloudSearch
@@ -81,7 +81,7 @@ class Asari
         end
         self.asari_instance.update_item(obj.send(:id), data)
       rescue Asari::DocumentUpdateException => e
-        asari_on_error(e)
+        self.asari_on_error(e)
       end
 
       # Internal: method for removing a soon-to-be deleted item from the CloudSearch
@@ -89,7 +89,7 @@ class Asari
       def asari_remove_item(obj)
         self.asari_instance.remove_item(obj.send(:id))
       rescue Asari::DocumentUpdateException => e
-        asari_on_error(e)
+        self.asari_on_error(e)
       end
 
       # Public: method for searching the index for the specified term and

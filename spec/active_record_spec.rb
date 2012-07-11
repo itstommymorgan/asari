@@ -1,5 +1,4 @@
 require_relative '../spec_helper'
-require 'pry'
 
 describe Asari do
   describe Asari::ActiveRecord do

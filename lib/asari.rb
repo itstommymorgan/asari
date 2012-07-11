@@ -8,6 +8,11 @@ require "json"
 require "cgi"
 
 class Asari
+  class << self
+    attr_accessor :mode
+    @mode = :sandbox
+  end
+
   attr_writer :api_version
   attr_writer :search_domain
 
@@ -43,6 +48,8 @@ class Asari
   # Raises: SearchException if there's an issue communicating the request to
   #   the server.
   def search(term)
+    return [] if self.class.mode == :sandbox
+
     url = "http://search-#{search_domain}.us-east-1.cloudsearch.amazonaws.com/#{api_version}/search?q=#{CGI.escape(term)}"
     begin
       response = HTTParty.get(url)
@@ -75,6 +82,7 @@ class Asari
   #   request to the server.
   #
   def add_item(id, fields)
+    return nil if self.class.mode == :sandbox
     query = { "type" => "add", "id" => id, "version" => 1, "lang" => "en" }
     query["fields"] = fields
     doc_request(query)
@@ -113,6 +121,8 @@ class Asari
   # Raises: DocumentUpdateException if there's an issue communicating the
   #   request to the server.
   def remove_item(id)
+    return nil if self.class.mode == :sandbox
+
     query = { "type" => "delete", "id" => id, "version" => 2 }
     doc_request query
   end

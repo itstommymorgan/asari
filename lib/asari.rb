@@ -86,7 +86,11 @@ class Asari
   #
   def add_item(id, fields)
     return nil if self.class.mode == :sandbox
-    query = { "type" => "add", "id" => id, "version" => 1, "lang" => "en" }
+    query = { "type" => "add", "id" => id.to_s, "version" => 1, "lang" => "en" }
+    fields.each do |k,v|
+      fields[k] = "" if v.nil?
+    end
+
     query["fields"] = fields
     doc_request(query)
   end
@@ -126,7 +130,7 @@ class Asari
   def remove_item(id)
     return nil if self.class.mode == :sandbox
 
-    query = { "type" => "delete", "id" => id, "version" => 2 }
+    query = { "type" => "delete", "id" => id.to_s, "version" => 2 }
     doc_request query
   end
 

@@ -10,9 +10,11 @@ class Asari
     def self.included(base)
       base.extend(ClassMethods)
 
-      base.before_delete :asari_remove_from_index
-      base.after_create :asari_add_to_index
-      base.after_update :asari_update_in_index
+      base.class_eval do
+        before_delete :asari_remove_from_index
+        after_create :asari_add_to_index
+        after_update :asari_update_in_index
+      end
     end
 
     def asari_remove_from_index

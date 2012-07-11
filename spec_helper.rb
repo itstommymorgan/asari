@@ -2,6 +2,9 @@ require 'asari'
 require 'asari/active_record'
 require 'ostruct'
 
+# Fake production mode to test.
+Asari.mode = :production
+
 RSpec.configuration.expect_with(:rspec) { |c| c.syntax = :expect }
 
 def fake_response
@@ -68,10 +71,6 @@ class ActiveRecordFake
 end
 
 class ActiveRecordFakeWithErrorOverride < ActiveRecordFake
-  include Asari::ActiveRecord
-
-  asari_index("test-domain", [:name, :email])
-
   def self.asari_on_error(exception)
     false
   end

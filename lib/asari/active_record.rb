@@ -48,18 +48,26 @@ class Asari
       #       asari_index("my-companies-users-asglkj4rsagkjlh34", [:name, :email])
       #
       def asari_index(search_domain, fields)
-        @asari = Asari.new(search_domain)
-        @fields = fields
+        self.class_variable_set(:@@asari, Asari.new(search_domain))
+        self.class_variable_set(:@@fields, fields)
+      end
+
+      def asari_instance
+        self.class_variable_get(:@@asari)
+      end
+
+      def asari_fields
+        self.class_variable_get(:@@fields)
       end
 
       # Internal: method for adding a newly created item to the CloudSearch
       # index. Should probably only be called from asari_add_to_index above.
       def asari_add_item(obj)
         data = {}
-        @fields.each do |field|
+        self.asari_fields.each do |field|
           data[field] = obj.send(field)
         end
-        @asari.add_item(obj.send(:id), data)
+        self.asari_instance.add_item(obj.send(:id), data)
       rescue Asari::DocumentUpdateException => e
         asari_on_error(e)
       end
@@ -68,10 +76,10 @@ class Asari
       # index. Should probably only be called from asari_update_in_index above.
       def asari_update_item(obj)
         data = {}
-        @fields.each do |field|
+        self.asari_fields.each do |field|
           data[field] = obj.send(field)
         end
-        @asari.update_item(obj.send(:id), data)
+        self.asari_instance.update_item(obj.send(:id), data)
       rescue Asari::DocumentUpdateException => e
         asari_on_error(e)
       end
@@ -79,7 +87,7 @@ class Asari
       # Internal: method for removing a soon-to-be deleted item from the CloudSearch
       # index. Should probably only be called from asari_remove_from_index above.
       def asari_remove_item(obj)
-        @asari.remove_item(obj.send(:id))
+        self.asari_instance.remove_item(obj.send(:id))
       rescue Asari::DocumentUpdateException => e
         asari_on_error(e)
       end
@@ -93,7 +101,7 @@ class Asari
       # Raises: an Asari::SearchException error if there are issues
       #   communicating with the CloudSearch server.
       def asari_find(term)
-        ids = @asari.search(term).map { |id| id.to_i }
+        ids = self.asari_instance.search(term).map { |id| id.to_i }
         begin
           self.find(*ids)
         rescue ::ActiveRecord::RecordNotFound

@@ -8,9 +8,12 @@ require "json"
 require "cgi"
 
 class Asari
-  class << self
-    attr_accessor :mode
-    @mode = :sandbox
+  def self.mode
+    @@mode
+  end
+
+  def self.mode=(mode)
+    @@mode = mode
   end
 
   attr_writer :api_version
@@ -149,3 +152,5 @@ class Asari
     nil
   end
 end
+
+Asari.mode = :sandbox # default to sandbox

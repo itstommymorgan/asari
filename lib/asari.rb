@@ -44,7 +44,13 @@ class Asari
   #   the server.
   def search(term)
     url = "http://search-#{search_domain}.us-east-1.cloudsearch.amazonaws.com/#{api_version}/search?q=#{CGI.escape(term)}"
-    response = HTTParty.get(url)
+    begin
+      response = HTTParty.get(url)
+    rescue Exception => e
+      ae = Asari::SearchException.new("#{e.class}: #{e.message}")
+      ae.set_backtrace e.backtrace
+      raise ae
+    end
 
     unless response.response.code == "200"
       raise Asari::SearchException.new("#{response.response.code}: #{response.response.msg}")
@@ -118,7 +124,13 @@ class Asari
 
     options = { :body => [query].to_json, :headers => { "Content-Type" => "application/json"} }
 
-    response = HTTParty.post(endpoint, options)
+    begin
+      response = HTTParty.post(endpoint, options)
+    rescue Exception => e
+      ae = Asari::DocumentUpdateException.new("#{e.class}: #{e.message}")
+      ae.set_backtrace e.backtrace
+      raise ae
+    end
 
     unless response.response.code == "200"
       raise Asari::DocumentUpdateException.new("#{response.response.code}: #{response.response.msg}")

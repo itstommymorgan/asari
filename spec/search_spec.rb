@@ -31,5 +31,10 @@ describe Asari do
       HTTParty.stub(:get).and_return(fake_error_response)
       expect { @asari.search("testsearch)") }.to raise_error Asari::SearchException
     end
+
+    it "raises an exception if there are internet issues." do
+      HTTParty.stub(:get).and_raise(SocketError.new)
+      expect { @asari.search("testsearch)") }.to raise_error Asari::SearchException
+    end
   end
 end

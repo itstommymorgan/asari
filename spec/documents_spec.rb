@@ -26,7 +26,25 @@ describe Asari do
       expect(@asari.remove_item("1")).to eq(nil)
     end
 
-    describe "when there are issues" do
+    describe "when there are internet issues" do
+      before :each do
+        HTTParty.stub(:post).and_raise(SocketError.new)
+      end
+
+      it "raises an exception when you try to add an item to the index" do
+        expect { @asari.add_item("1", {})}.to raise_error(Asari::DocumentUpdateException)
+      end
+
+      it "raises an exception when you try to update an item in the index" do
+        expect { @asari.update_item("1", {})}.to raise_error(Asari::DocumentUpdateException)
+      end
+
+      it "raises an exception when you try to remove an item from the index" do
+        expect { @asari.remove_item("1")}.to raise_error(Asari::DocumentUpdateException)
+      end
+    end
+
+    describe "when there are CloudSearch issues" do
       before :each do
         HTTParty.stub(:post).and_return(fake_error_response)
       end

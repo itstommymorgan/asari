@@ -5,6 +5,10 @@
 Asari is a Ruby wrapper for AWS CloudSearch, with optional ActiveRecord support
 for easy integration with your Rails apps.
 
+#### Why Asari?
+
+"Asari" is Japanese for "rummaging search." Seemed appropriate.
+
 ## Usage
 
 #### Basic Usage

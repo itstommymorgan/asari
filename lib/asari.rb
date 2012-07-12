@@ -54,12 +54,12 @@ class Asari
   def search(term, options = {})
     return [] if self.class.mode == :sandbox
 
-    page_size = options[:page_size] || 10
+    page_size = options[:page_size].to_i || 10
 
     url = "http://search-#{search_domain}.us-east-1.cloudsearch.amazonaws.com/#{api_version}/search?q=#{CGI.escape(term)}&size=#{page_size}"
 
     if options[:page]
-      start = (options[:page] - 1) * page_size
+      start = (options[:page].to_i - 1) * page_size
       url << "&start=#{start}"
     end
 

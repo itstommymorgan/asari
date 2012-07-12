@@ -104,7 +104,7 @@ class Asari
         records = self.asari_instance.search(term, options)
         ids = records.map { |id| id.to_i }
         begin
-          records.replace(self.find(*ids))
+          records.replace(Array(self.find(*ids)))
         rescue ::ActiveRecord::RecordNotFound
           records.replace([])
         end

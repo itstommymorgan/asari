@@ -9,12 +9,12 @@ describe Asari do
     end
 
     it "allows you to search." do
-      HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=testsearch")
+      HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=testsearch&size=10")
       @asari.search("testsearch")
     end
 
     it "escapes dangerous characters in search terms." do
-      HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=testsearch%21")
+      HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=testsearch%21&size=10")
       @asari.search("testsearch!")
     end
 
@@ -24,17 +24,29 @@ describe Asari do
     end
 
     it "honors the page option" do
-      HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=testsearch&size=20&start=41")
+      HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=testsearch&size=20&start=40")
       @asari.search("testsearch", :page_size => 20, :page => 3)
     end
 
     it "returns a list of document IDs for search results." do
-      expect(@asari.search("testsearch")).to eq(["123","456"])
+      result = @asari.search("testsearch")
+
+      expect(result.size).to eq(2)
+      expect(result[0]).to eq("123")
+      expect(result[1]).to eq("456")
+      expect(result.total_pages).to eq(1)
+      expect(result.current_page).to eq(1)
+      expect(result.page_size).to eq(10)
+      expect(result.total_entries).to eq(2)
     end
 
     it "returns an empty list when no search results are found." do
       HTTParty.stub(:get).and_return(fake_empty_response)
-      expect(@asari.search("testsearch")).to eq([])
+      result = @asari.search("testsearch")
+      expect(result.size).to eq(0)
+      expect(result.total_pages).to eq(1)
+      expect(result.current_page).to eq(1)
+      expect(result.total_entries).to eq(0)
     end
 
     it "raises an exception if the service errors out." do

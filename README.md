@@ -1,4 +1,114 @@
-asari
-=====
+# Asari
 
-a Ruby wrapper for AWS CloudSearch.
+## Description
+
+Asari is a Ruby wrapper for AWS CloudSearch, with optional ActiveRecord support
+for easy integration with your Rails apps.
+
+## Usage
+
+#### Basic Usage
+
+    asari = Asari.new("my-search-domain-asdfkljwe4") # CloudSearch search domain
+    asari.add_item("1", { :name => "Tommy Morgan", :email => "tommy@wellbredgrapefruit.com"})
+    asari.search("tommy") #=> ["1"] - a list of document IDs
+    
+#### Pagination
+
+Asari defaults to a page size of 10 (because that's CloudSearch's default), but
+it allows you to specify pagination parameters with any search:
+
+    asari.search("tommy", :page_size => 30, :page => 10)
+
+The results you get back from Asari#search aren't actually Array objects,
+either: they're Asari::Collection objects, which are (currently) API-compatible
+with will\_paginate:
+  
+    results = asari.search("tommy", :page_size => 30, :page => 10)
+    results.total_entries #=> 5000
+    results.total_pages   #=> 167
+    results.current_page  #=> 10
+    results.offset        #=> 300
+    results.page_size     #=> 30
+
+#### ActiveRecord
+
+If you require 'asari/active\_record' in your project, you have access to the
+ActiveRecord module for Asari. You can take advantage of that module like so:
+
+    class User < ActiveRecord::Base
+      include Asari::ActiveRecord
+
+      #... other stuff...
+
+      asari_index("search-domain-for-users", [:name, :email, :twitter_handle, :favorite_sweater])
+    end
+
+This will automatically set up before\_destroy, after\_create, and after\_update
+hooks for your AR model to keep the data in sync with your CloudSearch index -
+the second argument to asari\_index is the list of fields to maintain in the
+index, and can represent any function on your AR object. You can then interact
+with your AR objects as follows:
+
+    # Klass.asari_find returns a list of model objects in an
+    # Asari::Collection... 
+    User.asari_find("tommy") #=> [<User:...>, <User:...>, <User:...>]
+    
+    # or with a specific instance, if you need to manually do some index
+    # management...
+    @user.asari_add_to_index
+    @user.asari_update_in_index
+    @user.asari_remove_from_index
+
+Because index updates are done as part of the AR lifecycle by default, you also
+might want to have control over how Asari handles index update errors - it's
+kind of problematic, if, say, users can't sign up on your site because
+CloudSearch isn't available at the moment. By default Asari just raises these
+exceptions when they occur, but you can define a special handler if you want
+using the asari\_on\_error method:
+
+    class User < ActiveRecord::Base
+      include Asari::ActiveRecord
+
+      asari_index(... )
+
+      def self.asari_on_error(exception)
+        Airbrake.notify(...)
+        true
+      end
+    end
+
+In the above example we decide that, instead of raising exceptions every time,
+we're going to log exception data to Airbrake so that we can review it later and
+then return true so that the AR lifecycle continues normally.
+
+## Get it
+
+It's a gem named asari. Install it and make it available however you prefer.
+
+Asari is developed on ruby 1.9.3, and the ActiveRecord portion has been tested
+with Rails 3.2. I don't know off-hand of any reasons that it shouldn't work in
+other environments, but be aware that it hasn't (yet) been tested.
+
+## Contributions
+
+If Asari interests you and you think you might want to contribute, hit me up on
+Github. You can also just fork it and make some changes, but there's a better
+chance that your work won't be duplicated or rendered obsolete if you check in
+on the current development status first.
+
+Gem requirements/etc. should be handled by Bundler.
+
+## License
+Copyright (C) 2012 by Tommy Morgan
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+          
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.

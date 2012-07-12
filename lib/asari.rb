@@ -5,6 +5,7 @@ require "asari/exceptions"
 
 require "httparty"
 
+require "ostruct"
 require "json"
 require "cgi"
 
@@ -45,14 +46,14 @@ class Asari
   #
   #     @asari.search("fritters") #=> ["13","28"]
   #
-  # Returns: An Array of all document IDs in the system that match the
-  #   specified search term. If no results are found, an empty Array is
+  # Returns: An Asari::Collection containing all document IDs in the system that match the
+  #   specified search term. If no results are found, an empty Asari::Collection is
   #   returned.
   #
   # Raises: SearchException if there's an issue communicating the request to
   #   the server.
   def search(term, options = {})
-    return [] if self.class.mode == :sandbox
+    return Asari::Collection.sandbox_fake if self.class.mode == :sandbox
 
     page_size = options[:page_size].nil? ? 10 : options[:page_size].to_i
 

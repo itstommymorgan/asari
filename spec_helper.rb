@@ -8,12 +8,15 @@ Asari.mode = :production
 RSpec.configuration.expect_with(:rspec) { |c| c.syntax = :expect }
 
 def fake_response
-  OpenStruct.new(:parsed_response => { "hits" => {"hit" => [{"id" => "123"}, {"id" => "456"}]}},
+  OpenStruct.new(:parsed_response => { "hits" => {
+                      "found" => 2,
+                      "start" => 0,
+                      "hit" => [{"id" => "123"}, {"id" => "456"}]}},
                  :response => OpenStruct.new(:code => "200"))
 end
 
 def fake_empty_response
-  OpenStruct.new(:parsed_response => { "hits" => {"hit" => []}},
+  OpenStruct.new(:parsed_response => { "hits" => { "found" => 0, "start" => 0, "hit" => []}},
                  :response => OpenStruct.new(:code => "200"))
 end
 

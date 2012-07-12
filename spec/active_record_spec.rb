@@ -36,13 +36,13 @@ describe Asari do
       end
 
       it "will allow you to search for items with the index" do
-        @asari.should_receive(:search).with("fritters").and_return(["1"])
+        @asari.should_receive(:search).with("fritters", {}).and_return(["1"])
 
         ActiveRecordFake.asari_find("fritters")
       end
 
       it "will return a list of model objects when you search" do
-        @asari.should_receive(:search).with("fritters").and_return(["1"])
+        @asari.should_receive(:search).with("fritters", {}).and_return(["1"])
 
         results = ActiveRecordFake.asari_find("fritters")
         expect(results.class).to eq(Array)
@@ -50,7 +50,7 @@ describe Asari do
       end
 
       it "will return an empty list when you search for a term that isn't in the index" do
-        @asari.should_receive(:search).with("veggie burgers").and_return([])
+        @asari.should_receive(:search).with("veggie burgers", {}).and_return([])
 
         results = ActiveRecordFake.asari_find("veggie burgers")
         expect(results.class).to eq(Array)

@@ -28,6 +28,10 @@ class Asari
       (@current_page - 1) * @page_size
     end
 
+    def replace(array)
+      @data = array
+    end
+
     def method_missing(method, *args, &block)
       @data.send(method, *args, &block)
     end

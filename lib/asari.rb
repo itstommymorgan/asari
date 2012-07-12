@@ -1,5 +1,6 @@
 require "asari/version"
 
+require "asari/collection"
 require "asari/exceptions"
 
 require "httparty"
@@ -53,15 +54,12 @@ class Asari
   def search(term, options = {})
     return [] if self.class.mode == :sandbox
 
-    url = "http://search-#{search_domain}.us-east-1.cloudsearch.amazonaws.com/#{api_version}/search?q=#{CGI.escape(term)}"
+    page_size = options[:page_size] || 10
 
-    if options[:page_size]
-      url << "&size=#{options[:page_size]}"
-    end
+    url = "http://search-#{search_domain}.us-east-1.cloudsearch.amazonaws.com/#{api_version}/search?q=#{CGI.escape(term)}&size=#{page_size}"
 
     if options[:page]
-      size = options[:page_size] || 10
-      start = (options[:page] - 1) * size + 1
+      start = (options[:page] - 1) * page_size
       url << "&start=#{start}"
     end
 
@@ -77,7 +75,7 @@ class Asari
       raise Asari::SearchException.new("#{response.response.code}: #{response.response.msg}")
     end
 
-    response.parsed_response["hits"]["hit"].map { |h| h["id"] }
+    Asari::Collection.new(response, page_size)
   end
 
   # Public: Add an item to the index with the given ID.

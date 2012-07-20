@@ -40,29 +40,49 @@ class Asari
       #   search_domain - the CloudSearch domain to use for indexing this model.
       #   fields - an array of Symbols representing the list of fields that
       #     should be included in this index.
+      #   options - a hash of extra options to consider when indexing this
+      #     model. Right now, only one option is available:
+      #       when - a string or symbol representing a method name, or a Proc to
+      #         evaluate to determine if this model object should be indexed. On
+      #         creation, if the method or Proc specified returns false, the
+      #         model will not be indexed. On update, if the method or Proc
+      #         specified returns false, the model will be removed from the
+      #         index (if it exists there).
       #
       # Examples:
       #     class User < ActiveRecord::Base
       #       include Asari::ActiveRecord
       #
       #       asari_index("my-companies-users-asglkj4rsagkjlh34", [:name, :email])
+      #       # or
+      #       asari_index("my-companies-users-asglkj4rsagkjlh34", [:name, :email], :when => :should_be_indexed)
+      #       # or
+      #       asari_index("my-companies-users-asglkj4rsagkjlh34", [:name, :email], :when => Proc.new({ |user| user.published && !user.admin? }))
       #
-      def asari_index(search_domain, fields)
-        self.class_variable_set(:@@asari, Asari.new(search_domain))
-        self.class_variable_set(:@@fields, fields)
+      def asari_index(search_domain, fields, options = {})
+        self.class_variable_set(:@@asari_instance, Asari.new(search_domain))
+        self.class_variable_set(:@@asari_fields, fields)
+        self.class_variable_set(:@@asari_when, options.delete(:when))
       end
 
       def asari_instance
-        self.class_variable_get(:@@asari)
+        self.class_variable_get(:@@asari_instance)
       end
 
       def asari_fields
-        self.class_variable_get(:@@fields)
+        self.class_variable_get(:@@asari_fields)
+      end
+
+      def asari_when
+        self.class_variable_get(:@@asari_when)
       end
 
       # Internal: method for adding a newly created item to the CloudSearch
       # index. Should probably only be called from asari_add_to_index above.
       def asari_add_item(obj)
+        if self.asari_when
+          return unless asari_should_index?(obj)
+        end
         data = {}
         self.asari_fields.each do |field|
           data[field] = obj.send(field) || ""
@@ -75,6 +95,12 @@ class Asari
       # Internal: method for updating a freshly edited item to the CloudSearch
       # index. Should probably only be called from asari_update_in_index above.
       def asari_update_item(obj)
+        if self.asari_when
+          unless asari_should_index?(obj)
+            self.asari_remove_item(obj)
+            return
+          end
+        end
         data = {}
         self.asari_fields.each do |field|
           data[field] = obj.send(field)
@@ -90,6 +116,17 @@ class Asari
         self.asari_instance.remove_item(obj.send(:id))
       rescue Asari::DocumentUpdateException => e
         self.asari_on_error(e)
+      end
+
+      # Internal: method for looking at the when method/Proc (if defined) to
+      #   determine whether this model should be indexed.
+      def asari_should_index?(object)
+        when_test = self.asari_when
+        if when_test.is_a? Proc
+          return Proc.call(object)
+        else
+          return object.send(when_test)
+        end
       end
 
       # Public: method for searching the index for the specified term and

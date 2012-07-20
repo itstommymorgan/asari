@@ -5,7 +5,7 @@ describe Asari do
     describe "when CloudSearch is responding without error" do
       before :each do
         @asari = double()
-        ActiveRecordFake.class_variable_set(:@@asari, @asari)
+        ActiveRecordFake.class_variable_set(:@@asari_instance, @asari)
       end
 
       it "correctly sets up a before_destroy listener" do
@@ -60,7 +60,7 @@ describe Asari do
 
     describe "When CloudSearch is being a problem" do
       before :each do
-        ActiveRecordFake.class_variable_set(:@@asari, Asari.new("test-domain"))
+        ActiveRecordFake.class_variable_set(:@@asari_instance, Asari.new("test-domain"))
         stub_const("HTTParty", double())
         HTTParty.stub(:post).and_return(fake_error_response)
         HTTParty.stub(:get).and_return(fake_error_response)

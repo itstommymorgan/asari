@@ -16,6 +16,20 @@ for easy integration with your Rails apps.
     asari = Asari.new("my-search-domain-asdfkljwe4") # CloudSearch search domain
     asari.add_item("1", { :name => "Tommy Morgan", :email => "tommy@wellbredgrapefruit.com"})
     asari.search("tommy") #=> ["1"] - a list of document IDs
+
+#### Sandbox Mode
+
+Because there is no "local" version of CloudSearch, and search instances can be
+kind of expensive, you shouldn't have to have a development version of your
+index set up in order to use Asari. Because of that, Asari has a "sandbox" mode
+where it does nothing with add/update/delete requests and just returns an empty
+collection for any searches. This sandbox mode is enabled by default - any time
+you want to actually connect to the search index, just do the following:
+
+    Asari.mode = :production
+
+You can turn the sandbox back on, if you like, by setting the mode to `:sandbox`
+again.
     
 #### Pagination
 
@@ -63,6 +77,25 @@ with your AR objects as follows:
     @user.asari_add_to_index
     @user.asari_update_in_index
     @user.asari_remove_from_index
+
+You can also specify a :when option, like so:
+
+    asari_index("search-domain-for-users", [:name, :email, :twitter_handle,
+    :favorite_sweater], :when => :indexable)
+
+or
+    
+    asari_index("search-domain-for-users", [:name, :email, :twitter_handle,
+    :favorite_sweater], :when => Proc.new { |user| !user.admin && user.indexable })
+
+This provides a way to mark records that shouldn't be in the index. The :when
+option can be either a symbol - indicating a method on the object - or a Proc
+that accepts the object as its first parameter. If the method/Proc returns true
+when the object is created, the object is indexed - otherwise it is left out of
+the index. If the method/Proc returns true when the object is updated, the
+object is indexed - otherwise it is deleted from the index (if it has already
+been added). This lets you be sure that you never have inappropriate data in
+your search index.
 
 Because index updates are done as part of the AR lifecycle by default, you also
 might want to have control over how Asari handles index update errors - it's

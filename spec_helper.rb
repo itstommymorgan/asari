@@ -48,11 +48,11 @@ class ActiveRecordFake
       @after_update = sym
     end
 
-    def find(*args)
-      if args.size > 0
-        return [ActiveRecordFake.new]
+    def where(query, ids)
+      if ids.size > 0
+        [ActiveRecordFake.new]
       else
-        raise ActiveRecord::RecordNotFound
+        []
       end
     end
   end

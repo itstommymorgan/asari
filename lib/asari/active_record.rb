@@ -140,11 +140,8 @@ class Asari
       def asari_find(term, options = {})
         records = self.asari_instance.search(term, options)
         ids = records.map { |id| id.to_i }
-        begin
-          records.replace(Array(self.find(*ids)))
-        rescue ::ActiveRecord::RecordNotFound
-          records.replace([])
-        end
+
+        records.replace(Array(self.where("id in (?)", ids)))
       end
 
       # Public: method for handling errors from Asari document updates. By

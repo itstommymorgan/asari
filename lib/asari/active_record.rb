@@ -41,13 +41,15 @@ class Asari
       #   fields - an array of Symbols representing the list of fields that
       #     should be included in this index.
       #   options - a hash of extra options to consider when indexing this
-      #     model. Right now, only one option is available:
+      #     model. Options:
       #       when - a string or symbol representing a method name, or a Proc to
       #         evaluate to determine if this model object should be indexed. On
       #         creation, if the method or Proc specified returns false, the
       #         model will not be indexed. On update, if the method or Proc
       #         specified returns false, the model will be removed from the
       #         index (if it exists there).
+      #       aws_region - if this model is indexed on an AWS region other than
+      #       us-east-1, specify it with this option.
       #
       # Examples:
       #     class User < ActiveRecord::Base
@@ -60,7 +62,8 @@ class Asari
       #       asari_index("my-companies-users-asglkj4rsagkjlh34", [:name, :email], :when => Proc.new({ |user| user.published && !user.admin? }))
       #
       def asari_index(search_domain, fields, options = {})
-        self.class_variable_set(:@@asari_instance, Asari.new(search_domain))
+        aws_region = options.delete(:aws_region)
+        self.class_variable_set(:@@asari_instance, Asari.new(search_domain,aws_region))
         self.class_variable_set(:@@asari_fields, fields)
         self.class_variable_set(:@@asari_when, options.delete(:when))
       end

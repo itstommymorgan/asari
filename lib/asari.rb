@@ -22,7 +22,7 @@ class Asari
   attr_writer :search_domain
   attr_writer :aws_region
 
-  def initialize(search_domain=nil)
+  def initialize(search_domain=nil, aws_region=nil)
     @search_domain = search_domain 
   end
 

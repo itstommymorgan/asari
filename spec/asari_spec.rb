@@ -15,6 +15,11 @@ describe "Asari" do
       expect(@asari.api_version).to eq "2015-10-21"
     end
 
+    it "allows you to set a specific aws region." do
+      @asari.aws_region = "us-west-1"
+      expect(@asari.aws_region).to eq("us-west-1")
+    end
+
     it "raises an exeception if no search domain is provided." do
       expect { @asari.search_domain }.to raise_error Asari::MissingSearchDomainException
     end

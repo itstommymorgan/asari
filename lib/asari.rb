@@ -20,6 +20,7 @@ class Asari
 
   attr_writer :api_version
   attr_writer :search_domain
+  attr_writer :aws_region
 
   def initialize(search_domain=nil)
     @search_domain = search_domain 
@@ -40,6 +41,12 @@ class Asari
     @api_version || "2011-02-01"
   end
 
+  # Public: returns the current aws_region, or the sensible default of
+  # "us-east-1."
+  def aws_region
+    @aws_region || "us-east-1"
+  end
+
   # Public: Search for the specified term.
   #
   # Examples:
@@ -57,7 +64,7 @@ class Asari
 
     page_size = options[:page_size].nil? ? 10 : options[:page_size].to_i
 
-    url = "http://search-#{search_domain}.us-east-1.cloudsearch.amazonaws.com/#{api_version}/search?q=#{CGI.escape(term)}&size=#{page_size}"
+    url = "http://search-#{search_domain}.#{aws_region}.cloudsearch.amazonaws.com/#{api_version}/search?q=#{CGI.escape(term)}&size=#{page_size}"
 
     if options[:page]
       start = (options[:page].to_i - 1) * page_size

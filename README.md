@@ -119,6 +119,26 @@ In the above example we decide that, instead of raising exceptions every time,
 we're going to log exception data to Airbrake so that we can review it later and
 then return true so that the AR lifecycle continues normally.
 
+#### AWS Region
+
+By default, Asari assumes that you're operating in us-east-1, which is probably
+not a helpful assumption for some of you. To fix this, either set the
+`aws_region` property on your raw Asari object:
+
+    a = Asari.new("my-search-domain")
+    a.aws_region = "us-west-1"
+
+...Or provide the `:aws_region` option when you call `asari_index` on an
+ActiveRecord model:
+
+    class User < ActiveRecord::Base
+      include Asari::ActiveRecord
+
+      asari_index("my-search-domain",[field1,field2], :aws_regon => "us-west-1")
+
+      ...
+    end
+
 ## Get it
 
 It's a gem named asari. Install it and make it available however you prefer.

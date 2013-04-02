@@ -74,7 +74,7 @@ with your AR objects as follows:
     # Klass.asari_find returns a list of model objects in an
     # Asari::Collection... 
     User.asari_find("tommy") #=> [<User:...>, <User:...>, <User:...>]
-    User.asari_find("tommy", rank => "name")
+    User.asari_find("tommy", :rank => "name")
     
     # or with a specific instance, if you need to manually do some index
     # management...

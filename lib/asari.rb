@@ -107,7 +107,6 @@ class Asari
   #   request to the server.
   #
   def add_item(id, fields)
-    pp fields.inspect
     return nil if self.class.mode == :sandbox
     query = { "type" => "add", "id" => id.to_s, "version" => 1, "lang" => "en" }
     fields.each do |k,v|

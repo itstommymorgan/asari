@@ -16,6 +16,9 @@ for easy integration with your Rails apps.
     asari = Asari.new("my-search-domain-asdfkljwe4") # CloudSearch search domain
     asari.add_item("1", { :name => "Tommy Morgan", :email => "tommy@wellbredgrapefruit.com"})
     asari.search("tommy") #=> ["1"] - a list of document IDs
+    asari.search("tommy", :rank => "name") # Sort the search
+    asari.search("tommy", :rank => ["name", :desc]) # Sort the search descending
+    asari.search("tommy", :rank => "-name") # Another way to sort the search descending
 
 #### Sandbox Mode
 
@@ -71,6 +74,7 @@ with your AR objects as follows:
     # Klass.asari_find returns a list of model objects in an
     # Asari::Collection... 
     User.asari_find("tommy") #=> [<User:...>, <User:...>, <User:...>]
+    User.asari_find("tommy", rank => "name")
     
     # or with a specific instance, if you need to manually do some index
     # management...

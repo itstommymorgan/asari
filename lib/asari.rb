@@ -71,6 +71,11 @@ class Asari
       url << "&start=#{start}"
     end
 
+    if options[:rank]
+      rank = normalize_rank(options[:rank])
+      url << "&rank=#{rank}"
+    end
+
     begin
       response = HTTParty.get(url)
     rescue Exception => e
@@ -171,6 +176,14 @@ class Asari
     end
 
     nil
+  end
+
+  protected
+
+  def normalize_rank(rank)
+    rank = Array(rank)
+    rank << :asc if rank.size < 2
+    rank[1] == :desc ? "-#{rank[0]}" : rank[0]
   end
 end
 

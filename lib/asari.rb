@@ -71,6 +71,11 @@ class Asari
       url << "&start=#{start}"
     end
 
+    if options[:rank]
+      rank = normalize_rank(options[:rank])
+      url << "&rank=#{rank}"
+    end
+
     begin
       response = HTTParty.get(url)
     rescue Exception => e
@@ -105,6 +110,7 @@ class Asari
     return nil if self.class.mode == :sandbox
     query = { "type" => "add", "id" => id.to_s, "version" => 1, "lang" => "en" }
     fields.each do |k,v|
+      fields[k] = convert_date_or_time(fields[k])
       fields[k] = "" if v.nil?
     end
 
@@ -171,6 +177,19 @@ class Asari
     end
 
     nil
+  end
+
+  protected
+
+  def normalize_rank(rank)
+    rank = Array(rank)
+    rank << :asc if rank.size < 2
+    rank[1] == :desc ? "-#{rank[0]}" : rank[0]
+  end
+
+  def convert_date_or_time(obj)
+    return obj unless [Time, Date, DateTime].include?(obj.class)
+    obj.to_time.to_i
   end
 end
 

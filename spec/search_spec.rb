@@ -31,17 +31,17 @@ describe Asari do
     describe "the rank option" do
       it "takes a plain string" do
         HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=testsearch&size=10&rank=some_field")
-        @asari.search("testsearch", rank: "some_field")
+        @asari.search("testsearch", :rank => "some_field")
       end
 
       it "takes an array with :asc" do
         HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=testsearch&size=10&rank=some_field")
-        @asari.search("testsearch", rank: ["some_field", :asc])
+        @asari.search("testsearch", :rank => ["some_field", :asc])
       end
 
       it "takes an array with :desc" do
         HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=testsearch&size=10&rank=-some_field")
-        @asari.search("testsearch", rank: ["some_field", :desc])
+        @asari.search("testsearch", :rank => ["some_field", :desc])
       end
     end
 

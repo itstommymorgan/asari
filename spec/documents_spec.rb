@@ -6,6 +6,7 @@ describe Asari do
       @asari = Asari.new("testdomain")
       stub_const("HTTParty", double())
       HTTParty.stub(:post).and_return(fake_post_success)
+      Time.should_receive(:now).and_return(1)
     end
 
     it "allows you to add an item to the index." do
@@ -21,7 +22,7 @@ describe Asari do
     end
 
     it "allows you to delete an item from the index." do
-      HTTParty.should_receive(:post).with("http://doc-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/documents/batch", { :body => [{ "type" => "delete", "id" => "1", "version" => 2}].to_json, :headers => { "Content-Type" => "application/json"}})
+      HTTParty.should_receive(:post).with("http://doc-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/documents/batch", { :body => [{ "type" => "delete", "id" => "1", "version" => 1}].to_json, :headers => { "Content-Type" => "application/json"}})
 
       expect(@asari.remove_item("1")).to eq(nil)
     end

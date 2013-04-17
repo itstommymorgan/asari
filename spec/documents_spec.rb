@@ -8,10 +8,23 @@ describe Asari do
       HTTParty.stub(:post).and_return(fake_post_success)
     end
 
-    it "allows you to add an item to the index." do
-      HTTParty.should_receive(:post).with("http://doc-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/documents/batch", { :body => [{ "type" => "add", "id" => "1", "version" => 1, "lang" => "en", "fields" => { :name => "fritters"}}].to_json, :headers => { "Content-Type" => "application/json"}})
+    context "when region is not specified" do
+      it "allows you to add an item to the index using default region." do
+        HTTParty.should_receive(:post).with("http://doc-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/documents/batch", { :body => [{ "type" => "add", "id" => "1", "version" => 1, "lang" => "en", "fields" => { :name => "fritters"}}].to_json, :headers => { "Content-Type" => "application/json"}})
 
-      expect(@asari.add_item("1", {:name => "fritters"})).to eq(nil)
+        expect(@asari.add_item("1", {:name => "fritters"})).to eq(nil)
+      end
+    end
+
+    context "when region is specified" do
+      before(:each) do
+        @asari.aws_region = 'my-region'
+      end
+      it "allows you to add an item to the index using specified region." do
+        HTTParty.should_receive(:post).with("http://doc-testdomain.my-region.cloudsearch.amazonaws.com/2011-02-01/documents/batch", { :body => [{ "type" => "add", "id" => "1", "version" => 1, "lang" => "en", "fields" => { :name => "fritters"}}].to_json, :headers => { "Content-Type" => "application/json"}})
+
+        expect(@asari.add_item("1", {:name => "fritters"})).to eq(nil)
+      end
     end
 
     it "converts Time, DateTime, and Date fields to timestamp integers for rankability" do

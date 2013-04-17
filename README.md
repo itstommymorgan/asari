@@ -160,6 +160,11 @@ on the current development status first.
 
 Gem requirements/etc. should be handled by Bundler.
 
+### Contributors
+
+* [Emil Soman](https://github.com/emilsoman "emilsoman on Github")
+* [Chris Vincent](https://github.com/cvincent "cvincent on Github")
+
 ## License
 Copyright (C) 2012 by Tommy Morgan
 

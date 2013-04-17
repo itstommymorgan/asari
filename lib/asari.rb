@@ -160,7 +160,7 @@ class Asari
   # Internal: helper method: common logic for queries against the doc endpoint.
   #
   def doc_request(query)
-    endpoint = "http://doc-#{search_domain}.us-east-1.cloudsearch.amazonaws.com/#{api_version}/documents/batch"
+    endpoint = "http://doc-#{search_domain}.#{aws_region}.cloudsearch.amazonaws.com/#{api_version}/documents/batch"
 
     options = { :body => [query].to_json, :headers => { "Content-Type" => "application/json"} }
 

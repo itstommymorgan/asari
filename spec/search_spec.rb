@@ -8,9 +8,21 @@ describe Asari do
       HTTParty.stub(:get).and_return(fake_response)
     end
 
-    it "allows you to search." do
-      HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=testsearch&size=10")
-      @asari.search("testsearch")
+    context "when region is not specified" do
+      it "allows you to search using default region." do
+        HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=testsearch&size=10")
+        @asari.search("testsearch")
+      end
+    end
+
+    context "when region is not specified" do
+      before(:each) do
+        @asari.aws_region = 'my-region'
+      end
+      it "allows you to search using specified region." do
+        HTTParty.should_receive(:get).with("http://search-testdomain.my-region.cloudsearch.amazonaws.com/2011-02-01/search?q=testsearch&size=10")
+        @asari.search("testsearch")
+      end
     end
 
     it "escapes dangerous characters in search terms." do

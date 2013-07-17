@@ -11,6 +11,10 @@ for easy integration with your Rails apps.
 
 ## Usage
 
+#### Your Search Domain
+
+Amazon Cloud Search will give you a Search Endpoint and Document Endpoint.  When specifying your search domain in Asari omit the search- for your search domain.  For example if your search endpoint is "search-beavis-er432w3er.us-east-1.cloudsearch.amazonaws.com" the search domain you use in Asari would be "beavis-er432w3er".  Your region is the second item.  In this example it would be "us-east-1".
+
 #### Basic Usage
 
     asari = Asari.new("my-search-domain-asdfkljwe4") # CloudSearch search domain
@@ -54,8 +58,11 @@ with will\_paginate:
 
 #### ActiveRecord
 
-If you require 'asari/active\_record' in your project, you have access to the
-ActiveRecord module for Asari. You can take advantage of that module like so:
+By default the ActiveRecord module for Asari is not included in your project.  To use it you will need to require it via 
+
+    require 'asari/active_record'
+
+You can take advantage of that module like so:
 
     class User < ActiveRecord::Base
       include Asari::ActiveRecord

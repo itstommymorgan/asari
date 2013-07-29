@@ -183,6 +183,7 @@ Gem requirements/etc. should be handled by Bundler.
 
 ### Contributors
 
+* [Lance Gleason](https://github.com/lgleasain "lgleasain on Github")
 * [Emil Soman](https://github.com/emilsoman "emilsoman on Github")
 * [Chris Vincent](https://github.com/cvincent "cvincent on Github")
 

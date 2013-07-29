@@ -24,6 +24,7 @@ class Asari
 
   def initialize(search_domain=nil, aws_region=nil)
     @search_domain = search_domain 
+    @aws_region = aws_region
   end
 
   # Public: returns the current search_domain, or raises a

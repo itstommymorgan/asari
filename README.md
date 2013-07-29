@@ -56,6 +56,20 @@ with will\_paginate:
     results.offset        #=> 300
     results.page_size     #=> 30
 
+#### Retrieving Data From Index Fields
+
+By default Asari only returns the document id's for any hits returned from a search. 
+If you have result_enabled a index field you can have asari resturn that field in the
+result set without having to hit a database to get the results.  Simply pass the 
+:return_fields option with an array of fields
+
+    results = asari.search "Beavis", :return_fields => ["name", "address"]
+
+The result will look like this
+
+    {"23" => {"name" => "Beavis", "address" => "One CNN Center,  Atlanta"},
+    "54" => {"name" => "Beavis C", "address" => "Cornholio Way, USA"}}
+
 #### ActiveRecord
 
 By default the ActiveRecord module for Asari is not included in your project.  To use it you will need to require it via 

@@ -78,6 +78,27 @@ describe Asari do
       expect(result.total_entries).to eq(0)
     end
 
+    context 'return_fields option' do
+      let(:response_with_field_data) {  OpenStruct.new(:parsed_response => { "hits" => {
+        "found" => 2,
+        "start" => 0,
+        "hit" => [{"id" => "123",
+          "data" => {"name" => "Beavis", "address" => "arizona"}}, 
+          {"id" => "456",
+            "data" => {"name" => "Honey Badger", "address" => "africa"}}]}},
+            :response => OpenStruct.new(:code => "200"))
+      }
+      let(:return_struct) {{"123" => {"name" => "Beavis", "address" => "arizona"}, 
+                           "456" => {"name" => "Honey Badger", "address" => "africa"}}}
+
+      before :each do
+        HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=testsearch&size=10&return-fields=name,address").and_return response_with_field_data
+      end
+
+      subject { @asari.search("testsearch", :return_fields => [:name, :address])}
+      it {should eql return_struct}
+    end 
+
     it "raises an exception if the service errors out." do
       HTTParty.stub(:get).and_return(fake_error_response)
       expect { @asari.search("testsearch)") }.to raise_error Asari::SearchException
@@ -89,4 +110,5 @@ describe Asari do
     end
 
   end
+
 end

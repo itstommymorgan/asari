@@ -25,6 +25,13 @@ describe Asari do
       end
     end
 
+    context "query type" do
+      it "allows you to specify the query type" do
+        HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?bq=testsearch&size=10") 
+        @asari.search("testsearch", :query_type => :boolean)
+      end 
+    end
+
     it "escapes dangerous characters in search terms." do
       HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=testsearch%21&size=10")
       @asari.search("testsearch!")

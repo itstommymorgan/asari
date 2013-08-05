@@ -41,8 +41,12 @@ class Asari
 
       start = resp["hits"]["start"]
       @current_page = (start / page_size) + 1
-
-      @data = resp["hits"]["hit"].map { |h| h["id"] }
+      if resp["hits"]["hit"].first && resp["hits"]["hit"].first["data"]
+        @data = {}
+        resp["hits"]["hit"].each { |hit|  @data[hit["id"]] = hit["data"]}
+      else
+        @data = resp["hits"]["hit"].map { |hit| hit["id"] }
+      end
     end
 
     def offset

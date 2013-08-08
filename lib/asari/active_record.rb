@@ -142,7 +142,7 @@ class Asari
       #   communicating with the CloudSearch server.
       def asari_find(term, options = {})
         records = self.asari_instance.search(term, options)
-        ids = records.map { |id| id.to_i }
+        ids = records.map { |id| id[/\d+/].to_i }
 
         records.replace(Array(self.where("id in (?)", ids)))
       end

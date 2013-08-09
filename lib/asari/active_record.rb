@@ -142,7 +142,8 @@ class Asari
       #   communicating with the CloudSearch server.
       def asari_find(term, options = {})
         records = self.asari_instance.search(term, options)
-        ids = records.map { |id| id[/\d+/].to_i }
+        class_name = self.class.name.downcase
+        ids = records.map { |id| id[/\d+/].to_i if id[/\D+/] == class_name}.compact
 
         records.replace(Array(self.where("id in (?)", ids)))
       end

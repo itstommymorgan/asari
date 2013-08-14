@@ -126,7 +126,7 @@ class Asari
       def asari_should_index?(object)
         when_test = self.asari_when
         if when_test.is_a? Proc
-          return Proc.call(object)
+          return when_test.call(object)
         else
           return object.send(when_test)
         end

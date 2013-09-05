@@ -64,8 +64,9 @@ class Asari
     return Asari::Collection.sandbox_fake if self.class.mode == :sandbox
     query_type = (options[:query_type] == :boolean) ? 'bq' : 'q'
     page_size = options[:page_size].nil? ? 10 : options[:page_size].to_i
-
+    
     url = "http://search-#{search_domain}.#{aws_region}.cloudsearch.amazonaws.com/#{api_version}/search?#{query_type}=#{CGI.escape(term)}&size=#{page_size}"
+    url = url + "&bq=#{options[:boolean_query]}" if options[:boolean_query] && options[:query_type] != :boolean
     url = url + "&return-fields=#{options[:return_fields].join ','}" if options[:return_fields]
 
     if options[:page]

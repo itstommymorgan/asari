@@ -90,7 +90,7 @@ class Asari
         self.asari_fields.each do |field|
           data[field] = obj.send(field) || ""
         end
-        self.asari_instance.add_item(obj.send(:id), data)
+        self.asari_instance.add_item("#{obj.class.name.downcase}#{obj.send(:id)}", data)
       rescue Asari::DocumentUpdateException => e
         self.asari_on_error(e)
       end
@@ -108,7 +108,7 @@ class Asari
         self.asari_fields.each do |field|
           data[field] = obj.send(field)
         end
-        self.asari_instance.update_item(obj.send(:id), data)
+        self.asari_instance.update_item("#{obj.class.name.downcase}#{obj.send(:id)}", data)
       rescue Asari::DocumentUpdateException => e
         self.asari_on_error(e)
       end
@@ -116,7 +116,7 @@ class Asari
       # Internal: method for removing a soon-to-be deleted item from the CloudSearch
       # index. Should probably only be called from asari_remove_from_index above.
       def asari_remove_item(obj)
-        self.asari_instance.remove_item(obj.send(:id))
+        self.asari_instance.remove_item("#{obj.class.name.downcase}#{obj.send(:id)}")
       rescue Asari::DocumentUpdateException => e
         self.asari_on_error(e)
       end
@@ -142,7 +142,8 @@ class Asari
       #   communicating with the CloudSearch server.
       def asari_find(term, options = {})
         records = self.asari_instance.search(term, options)
-        ids = records.map { |id| id.to_i }
+        class_name = self.class.name.downcase
+        ids = records.map { |id| id[/\d+/].to_i if id[/\D+/] == class_name}.compact
 
         records.replace(Array(self.where("id in (?)", ids)))
       end

@@ -1,13 +1,13 @@
 require_relative "../spec_helper"
 
 describe Asari do
-  describe "searching" do
-    before :each do
-      @asari = Asari.new("testdomain")
-      stub_const("HTTParty", double())
-      HTTParty.stub(:get).and_return(fake_response)
-    end
+  before :each do
+    @asari = Asari.new("testdomain")
+    stub_const("HTTParty", double())
+    HTTParty.stub(:get).and_return(fake_response)
+  end
 
+  describe "searching" do
     context "when region is not specified" do
       it "allows you to search using default region." do
         HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=testsearch&size=10")
@@ -118,4 +118,27 @@ describe Asari do
 
   end
 
+  describe "boolean searching" do
+    it "builds a query string from a passed hash" do
+      HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?bq=%28and+foo%3A%27bar%27+baz%3A%27bug%27%29&size=10")
+      @asari.boolean_search(and: { foo: "bar", baz: "bug" })
+    end
+
+    it "honors the logic types" do
+      HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?bq=%28or+foo%3A%27bar%27+baz%3A%27bug%27%29&size=10")
+      @asari.boolean_search(or: { foo: "bar", baz: "bug" })
+    end
+
+    it "supports nested logic" do
+      HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?bq=%28or+is_donut%3A%27true%27%28and+round%3A%27true%27+frosting%3A%27true%27+fried%3A%27true%27%29%29&size=10")
+      @asari.boolean_search(or: {
+        is_donut: true,
+        and: {
+          round: true,
+          frosting: true,
+          fried: true
+        }
+      })
+    end
+  end
 end

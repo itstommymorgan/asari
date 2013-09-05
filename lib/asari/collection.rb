@@ -70,7 +70,7 @@ class Asari
     end
 
     def class
-      Asari::Collection
+      ::Asari::Collection
     end
 
     def method_missing(method, *args, &block)

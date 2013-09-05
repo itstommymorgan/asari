@@ -93,8 +93,35 @@ class Asari
     Asari::Collection.new(response, page_size)
   end
 
+  # Public: Search using boolean queries. Builds the query from a passed hash and
+  # calls search.
+  #
+  #     terms - a hash of the search query. %w(and or not) are reserved hash keys
+  #             that build the logic of the query
+  #
+  # Examples:
+  #
+  #     @asari.boolean_search(and: { name: "fritters", type: "donut" }) #=> ["13", "28"]
+  #
+  def boolean_search(terms = {}, options = {})
+    reduce = lambda { |hash|
+      hash.reduce("") do |memo, (key, value)|
+        if %w(and or not).include?(key.to_s) && value.is_a?(Hash)
+          memo += "(#{key}#{reduce.call(value)})"
+        else
+          memo += " #{key}:'#{value}'" unless value.to_s.nil? || value.to_s.empty?
+        end
+      end
+    }
+
+    query = reduce.call(terms)
+
+    search(query, options.merge(:query_type => :boolean))
+  end
+
+
   # Public: Add an item to the index with the given ID.
-  #   
+  #
   #     id - the ID to associate with this document
   #     fields - a hash of the data to associate with this document. This
   #       needs to match the search fields defined in your CloudSearch domain.

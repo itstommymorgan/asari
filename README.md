@@ -159,7 +159,7 @@ ActiveRecord model:
     class User < ActiveRecord::Base
       include Asari::ActiveRecord
 
-      asari_index("my-search-domain",[field1,field2], :aws_regon => "us-west-1")
+      asari_index("my-search-domain",[field1,field2], :aws_region => "us-west-1")
 
       ...
     end

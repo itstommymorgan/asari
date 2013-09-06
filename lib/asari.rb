@@ -23,7 +23,7 @@ class Asari
   attr_writer :aws_region
 
   def initialize(search_domain=nil, aws_region=nil)
-    @search_domain = search_domain 
+    @search_domain = search_domain
     @aws_region = aws_region
   end
 
@@ -111,6 +111,7 @@ class Asari
         else
           memo += " #{key}:'#{value}'" unless value.to_s.nil? || value.to_s.empty?
         end
+        memo
       end
     }
 
@@ -151,9 +152,9 @@ class Asari
   #   Note: As of right now, this is the same method call in CloudSearch
   #   that's utilized for adding items. This method is here to provide a
   #   consistent interface in case that changes.
-  # 
+  #
   # Examples:
-  #     
+  #
   #     @asari.update_item("4", { :name => "Party Pooper", :email => ..., ... }) #=> nil
   #
   # Returns: nil if the request is successful.
@@ -168,7 +169,7 @@ class Asari
   # Public: Remove an item from the index based on its document ID.
   #
   # Examples:
-  #   
+  #
   #     @asari.search("fritters") #=> ["13","28"]
   #     @asari.remove_item("13") #=> nil
   #     @asari.search("fritters") #=> ["28"]

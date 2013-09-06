@@ -27,9 +27,9 @@ describe Asari do
 
     context "query type" do
       it "allows you to specify the query type" do
-        HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?bq=testsearch&size=10") 
+        HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?bq=testsearch&size=10")
         @asari.search("testsearch", :query_type => :boolean)
-      end 
+      end
     end
 
     it "escapes dangerous characters in search terms." do
@@ -90,12 +90,12 @@ describe Asari do
         "found" => 2,
         "start" => 0,
         "hit" => [{"id" => "123",
-          "data" => {"name" => "Beavis", "address" => "arizona"}}, 
+          "data" => {"name" => "Beavis", "address" => "arizona"}},
           {"id" => "456",
             "data" => {"name" => "Honey Badger", "address" => "africa"}}]}},
             :response => OpenStruct.new(:code => "200"))
       }
-      let(:return_struct) {{"123" => {"name" => "Beavis", "address" => "arizona"}, 
+      let(:return_struct) {{"123" => {"name" => "Beavis", "address" => "arizona"},
                            "456" => {"name" => "Honey Badger", "address" => "africa"}}}
 
       before :each do
@@ -104,7 +104,7 @@ describe Asari do
 
       subject { @asari.search("testsearch", :return_fields => [:name, :address])}
       it {should eql return_struct}
-    end 
+    end
 
     it "raises an exception if the service errors out." do
       HTTParty.stub(:get).and_return(fake_error_response)
@@ -136,6 +136,18 @@ describe Asari do
         and: {
           round: true,
           frosting: true,
+          fried: true
+        }
+      })
+    end
+
+    it "fails gracefully with empty params" do
+      HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?bq=%28or+is_donut%3A%27true%27%28and+fried%3A%27true%27%29%29&size=10")
+      @asari.boolean_search(or: {
+        is_donut: true,
+        and: {
+          round: "",
+          frosting: nil,
           fried: true
         }
       })

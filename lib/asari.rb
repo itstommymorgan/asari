@@ -23,7 +23,7 @@ class Asari
   attr_writer :aws_region
 
   def initialize(search_domain=nil, aws_region=nil)
-    @search_domain = search_domain 
+    @search_domain = search_domain
     @aws_region = aws_region
   end
 
@@ -53,6 +53,8 @@ class Asari
   # Examples:
   #
   #     @asari.search("fritters") #=> ["13","28"]
+  #     @asari.search(filter: { and: { type: 'donuts' }}) #=> ["13,"28","35","50"]
+  #     @asari.search("fritters", filter: { and: { type: 'donuts' }}) #=> ["13"]
   #
   # Returns: An Asari::Collection containing all document IDs in the system that match the
   #   specified search term. If no results are found, an empty Asari::Collection is
@@ -62,11 +64,16 @@ class Asari
   #   the server.
   def search(term, options = {})
     return Asari::Collection.sandbox_fake if self.class.mode == :sandbox
-    query_type = (options[:query_type] == :boolean) ? 'bq' : 'q'
+    term,options = "",term if term.is_a?(Hash) and options.empty?
+
+    bq = boolean_query(options[:filter]) if options[:filter]
     page_size = options[:page_size].nil? ? 10 : options[:page_size].to_i
 
-    url = "http://search-#{search_domain}.#{aws_region}.cloudsearch.amazonaws.com/#{api_version}/search?#{query_type}=#{CGI.escape(term)}&size=#{page_size}"
-    url = url + "&return-fields=#{options[:return_fields].join ','}" if options[:return_fields]
+    url = "http://search-#{search_domain}.#{aws_region}.cloudsearch.amazonaws.com/#{api_version}/search"
+    url += "?q=#{CGI.escape(term)}"
+    url += "&bq=#{CGI.escape(bq)}" if options[:filter]
+    url += "&size=#{page_size}"
+    url += "&return-fields=#{options[:return_fields].join ','}" if options[:return_fields]
 
     if options[:page]
       start = (options[:page].to_i - 1) * page_size
@@ -94,7 +101,7 @@ class Asari
   end
 
   # Public: Add an item to the index with the given ID.
-  #   
+  #
   #     id - the ID to associate with this document
   #     fields - a hash of the data to associate with this document. This
   #       needs to match the search fields defined in your CloudSearch domain.
@@ -124,9 +131,9 @@ class Asari
   #   Note: As of right now, this is the same method call in CloudSearch
   #   that's utilized for adding items. This method is here to provide a
   #   consistent interface in case that changes.
-  # 
+  #
   # Examples:
-  #     
+  #
   #     @asari.update_item("4", { :name => "Party Pooper", :email => ..., ... }) #=> nil
   #
   # Returns: nil if the request is successful.
@@ -141,7 +148,7 @@ class Asari
   # Public: Remove an item from the index based on its document ID.
   #
   # Examples:
-  #   
+  #
   #     @asari.search("fritters") #=> ["13","28"]
   #     @asari.remove_item("13") #=> nil
   #     @asari.search("fritters") #=> ["28"]
@@ -182,6 +189,24 @@ class Asari
   end
 
   protected
+
+  # Private: Builds the query from a passed hash
+  #
+  #     terms - a hash of the search query. %w(and or not) are reserved hash keys
+  #             that build the logic of the query
+  def boolean_query(terms = {}, options = {})
+    reduce = lambda { |hash|
+      hash.reduce("") do |memo, (key, value)|
+        if %w(and or not).include?(key.to_s) && value.is_a?(Hash)
+          memo += "(#{key}#{reduce.call(value)})"
+        else
+          memo += " #{key}:'#{value}'" unless value.to_s.nil? || value.to_s.empty?
+        end
+        memo
+      end
+    }
+    reduce.call(terms)
+  end
 
   def normalize_rank(rank)
     rank = Array(rank)

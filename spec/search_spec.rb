@@ -1,13 +1,13 @@
 require_relative "../spec_helper"
 
 describe Asari do
-  describe "searching" do
-    before :each do
-      @asari = Asari.new("testdomain")
-      stub_const("HTTParty", double())
-      HTTParty.stub(:get).and_return(fake_response)
-    end
+  before :each do
+    @asari = Asari.new("testdomain")
+    stub_const("HTTParty", double())
+    HTTParty.stub(:get).and_return(fake_response)
+  end
 
+  describe "searching" do
     context "when region is not specified" do
       it "allows you to search using default region." do
         HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=testsearch&size=10")
@@ -23,13 +23,6 @@ describe Asari do
         HTTParty.should_receive(:get).with("http://search-testdomain.my-region.cloudsearch.amazonaws.com/2011-02-01/search?q=testsearch&size=10")
         @asari.search("testsearch")
       end
-    end
-
-    context "query type" do
-      it "allows you to specify the query type" do
-        HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?bq=testsearch&size=10") 
-        @asari.search("testsearch", :query_type => :boolean)
-      end 
     end
 
     it "escapes dangerous characters in search terms." do
@@ -90,12 +83,12 @@ describe Asari do
         "found" => 2,
         "start" => 0,
         "hit" => [{"id" => "123",
-          "data" => {"name" => "Beavis", "address" => "arizona"}}, 
+          "data" => {"name" => "Beavis", "address" => "arizona"}},
           {"id" => "456",
             "data" => {"name" => "Honey Badger", "address" => "africa"}}]}},
             :response => OpenStruct.new(:code => "200"))
       }
-      let(:return_struct) {{"123" => {"name" => "Beavis", "address" => "arizona"}, 
+      let(:return_struct) {{"123" => {"name" => "Beavis", "address" => "arizona"},
                            "456" => {"name" => "Honey Badger", "address" => "africa"}}}
 
       before :each do
@@ -104,7 +97,7 @@ describe Asari do
 
       subject { @asari.search("testsearch", :return_fields => [:name, :address])}
       it {should eql return_struct}
-    end 
+    end
 
     it "raises an exception if the service errors out." do
       HTTParty.stub(:get).and_return(fake_error_response)
@@ -118,4 +111,36 @@ describe Asari do
 
   end
 
+  describe "boolean searching" do
+    it "builds a query string from a passed hash" do
+      HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=&bq=%28and+foo%3A%27bar%27+baz%3A%27bug%27%29&size=10")
+      @asari.search(filter: { and: { foo: "bar", baz: "bug" }})
+    end
+
+    it "honors the logic types" do
+      HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=&bq=%28or+foo%3A%27bar%27+baz%3A%27bug%27%29&size=10")
+      @asari.search(filter: { or: { foo: "bar", baz: "bug" }})
+    end
+
+    it "supports nested logic" do
+      HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=&bq=%28or+is_donut%3A%27true%27%28and+round%3A%27true%27+frosting%3A%27true%27+fried%3A%27true%27%29%29&size=10")
+      @asari.search(filter: { or: { is_donut: true, and:
+                            { round: true, frosting: true, fried: true }}
+      })
+    end
+
+    it "fails gracefully with empty params" do
+      HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=&bq=%28or+is_donut%3A%27true%27%28and+fried%3A%27true%27%29%29&size=10")
+      @asari.search(filter: { or: { is_donut: true, and:
+                            { round: "", frosting: nil, fried: true }}
+      })
+    end
+
+    it "supports full text search and boolean searching" do
+      HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=nom&bq=%28or+is_donut%3A%27true%27%28and+fried%3A%27true%27%29%29&size=10")
+      @asari.search("nom", filter: { or: { is_donut: true, and:
+                                   { round: "", frosting: nil, fried: true }}
+      })
+    end
+  end
 end

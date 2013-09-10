@@ -24,6 +24,16 @@ Amazon Cloud Search will give you a Search Endpoint and Document Endpoint.  When
     asari.search("tommy", :rank => ["name", :desc]) # Sort the search descending
     asari.search("tommy", :rank => "-name") # Another way to sort the search descending
 
+
+#### Boolean Query Usage
+
+    asari.search(filter: { and: { title: "donut", type: "cruller" }})
+    asari.search("boston creme", filter: { and: { title: "donut", or: { type: "cruller",
+type: "twist" }}}) # Full text search and nested boolean logic
+
+For more information on how to use Cloudsearch boolean queries, [see the
+documentation.](http://docs.aws.amazon.com/cloudsearch/latest/developerguide/booleansearch.html)
+
 #### Sandbox Mode
 
 Because there is no "local" version of CloudSearch, and search instances can be

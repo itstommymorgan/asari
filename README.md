@@ -27,7 +27,7 @@ Amazon Cloud Search will give you a Search Endpoint and Document Endpoint.  When
 
 #### Boolean Query Usage
 
-    asari.search(filter: { and: { title: "donut", type: "cruller" }})
+    asari.search(filter: { and: { title: "donut", type: [[]] }})
     asari.search("boston creme", filter: { and: { title: "donut", or: { type: "cruller",
 type: "twist" }}}) # Full text search and nested boolean logic
 

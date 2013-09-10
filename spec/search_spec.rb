@@ -130,9 +130,9 @@ describe Asari do
     end
 
     it "fails gracefully with empty params" do
-      HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=&bq=%28or+is_donut%3A%27true%27%28and+fried%3A%27true%27%29%29&size=10")
+      HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=&bq=%28or+is_donut%3A%27true%27%29&size=10")
       @asari.search(filter: { or: { is_donut: true, and:
-                            { round: "", frosting: nil, fried: true }}
+                            { round: "", frosting: nil, fried: nil }}
       })
     end
 

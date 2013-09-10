@@ -198,7 +198,8 @@ class Asari
     reduce = lambda { |hash|
       hash.reduce("") do |memo, (key, value)|
         if %w(and or not).include?(key.to_s) && value.is_a?(Hash)
-          memo += "(#{key}#{reduce.call(value)})"
+          sub_query = reduce.call(value)
+          memo += "(#{key}#{sub_query})" unless sub_query.empty?
         else
           memo += " #{key}:'#{value}'" unless value.to_s.nil? || value.to_s.empty?
         end

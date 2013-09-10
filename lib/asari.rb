@@ -53,6 +53,8 @@ class Asari
   # Examples:
   #
   #     @asari.search("fritters") #=> ["13","28"]
+  #     @asari.search(filter: { and: { type: 'donuts' }}) #=> ["13,"28","35","50"]
+  #     @asari.search("fritters", filter: { and: { type: 'donuts' }}) #=> ["13"]
   #
   # Returns: An Asari::Collection containing all document IDs in the system that match the
   #   specified search term. If no results are found, an empty Asari::Collection is
@@ -62,11 +64,16 @@ class Asari
   #   the server.
   def search(term, options = {})
     return Asari::Collection.sandbox_fake if self.class.mode == :sandbox
-    query_type = (options[:query_type] == :boolean) ? 'bq' : 'q'
+    term,options = "",term if term.is_a?(Hash) and options.empty?
+
+    bq = boolean_query(options[:filter]) if options[:filter]
     page_size = options[:page_size].nil? ? 10 : options[:page_size].to_i
 
-    url = "http://search-#{search_domain}.#{aws_region}.cloudsearch.amazonaws.com/#{api_version}/search?#{query_type}=#{CGI.escape(term)}&size=#{page_size}"
-    url = url + "&return-fields=#{options[:return_fields].join ','}" if options[:return_fields]
+    url = "http://search-#{search_domain}.#{aws_region}.cloudsearch.amazonaws.com/#{api_version}/search"
+    url += "?q=#{CGI.escape(term)}"
+    url += "&bq=#{CGI.escape(bq)}" if options[:filter]
+    url += "&size=#{page_size}"
+    url += "&return-fields=#{options[:return_fields].join ','}" if options[:return_fields]
 
     if options[:page]
       start = (options[:page].to_i - 1) * page_size
@@ -92,34 +99,6 @@ class Asari
 
     Asari::Collection.new(response, page_size)
   end
-
-  # Public: Search using boolean queries. Builds the query from a passed hash and
-  # calls search.
-  #
-  #     terms - a hash of the search query. %w(and or not) are reserved hash keys
-  #             that build the logic of the query
-  #
-  # Examples:
-  #
-  #     @asari.boolean_search(and: { name: "fritters", type: "donut" }) #=> ["13", "28"]
-  #
-  def boolean_search(terms = {}, options = {})
-    reduce = lambda { |hash|
-      hash.reduce("") do |memo, (key, value)|
-        if %w(and or not).include?(key.to_s) && value.is_a?(Hash)
-          memo += "(#{key}#{reduce.call(value)})"
-        else
-          memo += " #{key}:'#{value}'" unless value.to_s.nil? || value.to_s.empty?
-        end
-        memo
-      end
-    }
-
-    query = reduce.call(terms)
-
-    search(query, options.merge(:query_type => :boolean))
-  end
-
 
   # Public: Add an item to the index with the given ID.
   #
@@ -210,6 +189,24 @@ class Asari
   end
 
   protected
+
+  # Private: Builds the query from a passed hash
+  #
+  #     terms - a hash of the search query. %w(and or not) are reserved hash keys
+  #             that build the logic of the query
+  def boolean_query(terms = {}, options = {})
+    reduce = lambda { |hash|
+      hash.reduce("") do |memo, (key, value)|
+        if %w(and or not).include?(key.to_s) && value.is_a?(Hash)
+          memo += "(#{key}#{reduce.call(value)})"
+        else
+          memo += " #{key}:'#{value}'" unless value.to_s.nil? || value.to_s.empty?
+        end
+        memo
+      end
+    }
+    reduce.call(terms)
+  end
 
   def normalize_rank(rank)
     rank = Array(rank)

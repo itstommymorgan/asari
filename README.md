@@ -193,9 +193,10 @@ Gem requirements/etc. should be handled by Bundler.
 
 ### Contributors
 
-* [Lance Gleason](https://github.com/lgleasain "lgleasain on Github")
-* [Emil Soman](https://github.com/emilsoman "emilsoman on Github")
-* [Chris Vincent](https://github.com/cvincent "cvincent on Github")
+* [Lance Gleason](https://github.com/lgleasain "lgleasain on GitHub")
+* [Emil Soman](https://github.com/emilsoman "emilsoman on GitHub")
+* [Chris Vincent](https://github.com/cvincent "cvincent on GitHub")
+* [Kyle Meyer](https://github.com/kaiuhl "kaiuhl on GitHub")
 
 ## License
 Copyright (C) 2012 by Tommy Morgan

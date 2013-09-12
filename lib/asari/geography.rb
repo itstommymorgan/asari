@@ -4,7 +4,7 @@ class Asari
   #
   # http://docs.aws.amazon.com/cloudsearch/latest/developerguide/geosearch.html
   #
-  module GeographyConversion
+  module Geography
     EARTH_RADIUS = 6367444
     METERS_PER_DEGREE_OF_LATITUDE = 111133
 
@@ -56,8 +56,8 @@ class Asari
       #
       #     options - the options hash requires:
       #       meters: an Integer
-      #       lat: an Integer
-      #       lng: an Integer
+      #       lat: a Float
+      #       lng: a Float
       #
       # Examples:
       #
@@ -67,8 +67,8 @@ class Asari
       # Returns: a Hash containing :lat and :lng keys with Range values
       #
       def coordinate_box(options)
-        latitude = latitude_to_degrees(options[:lat])
-        longitude = longitude_to_degrees(options[:lng], latitude)
+        latitude = options[:lat]
+        longitude = options[:lng]
 
         earth_radius_at_latitude = EARTH_RADIUS * Math.cos(latitude * ( Math::PI / 180 ))
 

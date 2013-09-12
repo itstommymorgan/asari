@@ -6,15 +6,16 @@ class Asari
   #
   module GeographyConversion
     EARTH_RADIUS = 6367444
-    METERS_PER_DEGREE_OF_LATITUDE = 111133 # (2π * EARTH_RADIUS) / 360
+    METERS_PER_DEGREE_OF_LATITUDE = 111133
+
     class << self
 
       # Public: Converts coordinates to unsigned integers that store up to three
       # place values.
       #
       #     options - the options hash requires:
-      #       lat - a Float
-      #       lng - a Float
+      #       lat: a Float
+      #       lng: a Float
       #
       # Examples:
       #
@@ -33,8 +34,8 @@ class Asari
       # the standard Geographic Coordinate System.
       #
       #     options - the options hash requires:
-      #       lat - an Integer
-      #       lng - an Integer
+      #       lat: an Integer
+      #       lng: an Integer
       #
       # Examples:
       #
@@ -49,6 +50,41 @@ class Asari
         { lat: latitude, lng: longitude }
       end
 
+      # Public: Calculates a range of integers to search within from a point
+      # and a distance in meters. This is used to search a certain distance from
+      # a point in Cloudsearch.
+      #
+      #     options - the options hash requires:
+      #       meters: an Integer
+      #       lat: an Integer
+      #       lng: an Integer
+      #
+      # Examples:
+      #
+      #     Asari::GeographyConversion.coordinate_box(lat: 25062714160, lng: 1112993466, miles: 5)
+      #     #=> {:lat=>25062714160, :lng=>1112993466}
+      #
+      # Returns: a Hash containing :lat and :lng keys with Range values
+      #
+      def coordinate_box(options)
+        latitude = latitude_to_degrees(options[:lat])
+        longitude = longitude_to_degrees(options[:lng], latitude)
+
+        earth_radius_at_latitude = EARTH_RADIUS * Math.cos(latitude * ( Math::PI / 180 ))
+
+        change_in_latitude = ( options[:meters].to_f / EARTH_RADIUS ) * ( 180 / Math::PI )
+        change_in_longitude = ( options[:meters].to_f / earth_radius_at_latitude ) * ( 180 / Math::PI )
+
+        bottom = latitude_to_int(latitude - change_in_latitude)
+        top = latitude_to_int(latitude + change_in_latitude)
+
+        left = longitude_to_int(longitude - change_in_longitude, latitude)
+        right = longitude_to_int(longitude + change_in_longitude, latitude)
+
+        { lat: (bottom.round..top.round), lng: (left.round..right.round) }
+      end
+
+
       private
       def latitude_to_int(degrees)
         ((degrees + 180) * METERS_PER_DEGREE_OF_LATITUDE * 1000).round
@@ -59,13 +95,17 @@ class Asari
       end
 
       def longitude_to_int(degrees, latitude)
-        meters_per_degree_of_longitude = METERS_PER_DEGREE_OF_LATITUDE * Math.cos(latitude)
-        ((degrees + 180) * meters_per_degree_of_longitude * 1000).round
+        meters = meters_per_degree_of_longitude(latitude)
+        ((degrees + 180) * meters * 1000).round
       end
 
       def longitude_to_degrees(int, latitude_in_degrees)
-        meters_per_degree_of_longitude = METERS_PER_DEGREE_OF_LATITUDE * Math.cos(latitude_in_degrees)
-        ((int / meters_per_degree_of_longitude / 1000.0) - 180).round(3)
+        meters = meters_per_degree_of_longitude(latitude_in_degrees)
+        ((int / meters / 1000.0) - 180).round(3)
+      end
+
+      def meters_per_degree_of_longitude(latitude)
+        METERS_PER_DEGREE_OF_LATITUDE * Math.cos(latitude)
       end
     end
   end

@@ -2,6 +2,7 @@ require "asari/version"
 
 require "asari/collection"
 require "asari/exceptions"
+require "asari/geography"
 
 require "httparty"
 

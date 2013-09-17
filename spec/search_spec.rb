@@ -143,4 +143,11 @@ describe Asari do
       })
     end
   end
+
+  describe "geography searching" do
+    it "builds a proper query string" do
+      HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=nom&bq=%28or+is_donut%3A%27true%27%28and+fried%3A%27true%27%29%29&size=10")
+      @asari.search filter: { and: Asari::Geography.coordinate_box(meters: 5000, lat: 45.52, lng: 122.6819) }
+    end
+  end
 end

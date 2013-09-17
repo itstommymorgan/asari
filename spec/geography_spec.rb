@@ -20,7 +20,7 @@ describe Asari::Geography do
   end
 
   describe "#coordinate_box" do
-    it "creates a range from a coordinate and a distance in miles" do
+    it "creates a range from a coordinate and a distance in meters" do
       result = convert.coordinate_box(lat: 45.52, lng: 122.682, meters: 5000)
       expect(result).to eq({
         lat: 2505771415..2506771417,

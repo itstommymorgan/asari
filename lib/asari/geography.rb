@@ -10,7 +10,7 @@ class Asari
 
     class << self
 
-      # Public: Converts coordinates to unsigned integers that store up to three
+      # Public: Converts coordinates to unsigned integers that store up to two
       # place values.
       #
       #     options - the options hash requires:

@@ -202,7 +202,11 @@ class Asari
           sub_query = reduce.call(value)
           memo += "(#{key}#{sub_query})" unless sub_query.empty?
         else
-          memo += " #{key}:'#{value}'" unless value.to_s.nil? || value.to_s.empty?
+          if value.is_a?(Range) || value.is_a?(Integer)
+            memo += " #{key}:#{value}"
+          else
+            memo += " #{key}:'#{value}'" unless value.to_s.empty?
+          end
         end
         memo
       end

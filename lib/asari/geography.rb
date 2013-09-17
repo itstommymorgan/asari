@@ -10,7 +10,7 @@ class Asari
 
     class << self
 
-      # Public: Converts coordinates to unsigned integers that store up to three
+      # Public: Converts coordinates to unsigned integers that store up to two
       # place values.
       #
       #     options - the options hash requires:
@@ -87,21 +87,21 @@ class Asari
 
       private
       def latitude_to_int(degrees)
-        ((degrees + 180) * METERS_PER_DEGREE_OF_LATITUDE * 1000).round
+        ((degrees + 180) * METERS_PER_DEGREE_OF_LATITUDE * 100).round
       end
 
       def latitude_to_degrees(int)
-        ((int / METERS_PER_DEGREE_OF_LATITUDE / 1000.0) - 180).round(3)
+        ((int / METERS_PER_DEGREE_OF_LATITUDE / 100.0) - 180).round(3)
       end
 
       def longitude_to_int(degrees, latitude)
         meters = meters_per_degree_of_longitude(latitude)
-        ((degrees + 180) * meters * 1000).round
+        ((degrees + 180) * meters * 100).round
       end
 
       def longitude_to_degrees(int, latitude_in_degrees)
         meters = meters_per_degree_of_longitude(latitude_in_degrees)
-        ((int / meters / 1000.0) - 180).round(3)
+        ((int / meters / 100.0) - 180).round(3)
       end
 
       def meters_per_degree_of_longitude(latitude)

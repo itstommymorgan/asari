@@ -89,13 +89,13 @@ class Asari
     begin
       response = HTTParty.get(url)
     rescue Exception => e
-      ae = Asari::SearchException.new("#{e.class}: #{e.message}")
+      ae = Asari::SearchException.new("#{e.class}: #{e.message} (#{url})")
       ae.set_backtrace e.backtrace
       raise ae
     end
 
     unless response.response.code == "200"
-      raise Asari::SearchException.new("#{response.response.code}: #{response.response.msg}")
+      raise Asari::SearchException.new("#{response.response.code}: #{response.response.msg} (#{url})")
     end
 
     Asari::Collection.new(response, page_size)
@@ -202,7 +202,11 @@ class Asari
           sub_query = reduce.call(value)
           memo += "(#{key}#{sub_query})" unless sub_query.empty?
         else
-          memo += " #{key}:'#{value}'" unless value.to_s.nil? || value.to_s.empty?
+          if value.is_a?(Range) || value.is_a?(Integer)
+            memo += " #{key}:#{value}"
+          else
+            memo += " #{key}:'#{value}'" unless value.to_s.empty?
+          end
         end
         memo
       end

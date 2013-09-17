@@ -89,13 +89,13 @@ class Asari
     begin
       response = HTTParty.get(url)
     rescue Exception => e
-      ae = Asari::SearchException.new("#{e.class}: #{e.message}")
+      ae = Asari::SearchException.new("#{e.class}: #{e.message} (#{url})")
       ae.set_backtrace e.backtrace
       raise ae
     end
 
     unless response.response.code == "200"
-      raise Asari::SearchException.new("#{response.response.code}: #{response.response.msg}")
+      raise Asari::SearchException.new("#{response.response.code}: #{response.response.msg} (#{url})")
     end
 
     Asari::Collection.new(response, page_size)

@@ -28,11 +28,26 @@ Amazon Cloud Search will give you a Search Endpoint and Document Endpoint.  When
 #### Boolean Query Usage
 
     asari.search(filter: { and: { title: "donut", type: "cruller" }})
-    asari.search("boston creme", filter: { and: { title: "donut", or: { type: "cruller",
-type: "twist" }}}) # Full text search and nested boolean logic
+    asari.search("boston creme", filter: { and: { title: "donut", or: { type: "cruller", type: "twist" }}}) # Full text search and nested boolean logic
 
 For more information on how to use Cloudsearch boolean queries, [see the
 documentation.](http://docs.aws.amazon.com/cloudsearch/latest/developerguide/booleansearch.html)
+
+### Geospatial Query Usage
+
+While Cloudsearch does not natively support location search, you can implement rudimentary location search by representing latitude and longitude as integers in your search domain. Asari has a Geography module you can use to simplify the conversion of latitude and longitude to cartesian coordinates as well as the generation of a coordinate box to search within. Asari's Boolean Query syntax can then be used to search within the area. Note that because Cloudsearch only supports 32-bit unsigned integers, it is only possible to store latitude and longitude to two place values. This means very precise search isn't possible using Asari and Cloudsearch. 
+
+    coordinates = Asari::Geography.degrees_to_int(lat: 45.52, lng: 122.68)
+      #=> { lat: 2506271416, lng: 111298648 }
+    asari.add_item("1", { name: "Tommy Morgan", lat: coordinates[:lat], lng: coordinates[:lng] })
+      #=> nil
+    coordinate_box = Asari::Geography.coordinate_box(lat: 45.2, lng: 122.85, meters: 7500)
+      #=> { lat: 2505521415..2507021417, lng: 111263231..111334065 } 
+    asari.search("tommy", filter: { and: coordinate_box }
+      #=> ["1"] = a list of document IDs
+
+For more information on how to use Cloudsearch for location search, [see the
+documentation.](http://docs.aws.amazon.com/cloudsearch/latest/developerguide/geosearch.html)
 
 #### Sandbox Mode
 

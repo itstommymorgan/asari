@@ -71,7 +71,7 @@ class Asari
     page_size = options[:page_size].nil? ? 10 : options[:page_size].to_i
 
     url = "http://search-#{search_domain}.#{aws_region}.cloudsearch.amazonaws.com/#{api_version}/search"
-    url += "?q=#{CGI.escape(term)}"
+    url += "?q=#{CGI.escape(term.to_s)}"
     url += "&bq=#{CGI.escape(bq)}" if options[:filter]
     url += "&size=#{page_size}"
     url += "&return-fields=#{options[:return_fields].join ','}" if options[:return_fields]

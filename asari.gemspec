@@ -7,6 +7,7 @@ Gem::Specification.new do |s|
   s.version     = Asari::VERSION
   s.authors     = ["Tommy Morgan"]
   s.email       = ["tommy@wellbredgrapefruit.com"]
+  s.license     = "MIT"
   s.homepage    = "http://github.com/duwanis/asari"
   s.summary     = %q{Asari is a Ruby interface for AWS CloudSearch.}
   s.description = %q{Asari s a Ruby interface for AWS CloudSearch}

@@ -77,9 +77,13 @@ class Asari
 
         bottom = latitude_to_int(latitude - change_in_latitude)
         top = latitude_to_int(latitude + change_in_latitude)
-
-        left = longitude_to_int(longitude - change_in_longitude, latitude)
-        right = longitude_to_int(longitude + change_in_longitude, latitude)
+        if((latitude - change_in_latitude).abs < (latitude + change_in_latitude).abs)
+          left = longitude_to_int(longitude - change_in_longitude, latitude - change_in_latitude)
+          right = longitude_to_int(longitude + change_in_longitude, latitude - change_in_latitude)
+        else
+          left = longitude_to_int(longitude - change_in_longitude, latitude + change_in_latitude)
+          right = longitude_to_int(longitude + change_in_longitude, latitude + change_in_latitude)
+        end
 
         { lat: (bottom.round..top.round), lng: (left.round..right.round) }
       end
@@ -105,7 +109,7 @@ class Asari
       end
 
       def meters_per_degree_of_longitude(latitude)
-        METERS_PER_DEGREE_OF_LATITUDE * Math.cos(latitude)
+        METERS_PER_DEGREE_OF_LATITUDE * Math.cos(latitude  * ( Math::PI / 180 ))
       end
     end
   end

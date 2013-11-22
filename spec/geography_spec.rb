@@ -7,7 +7,7 @@ describe Asari::Geography do
   describe "#degrees_to_int" do
     it "converts standard lat and lng to integers" do
       result = convert.degrees_to_int(lat: 45.52, lng: 122.68)
-      expect(result).to eq({ lat: 2506271416, lng: 111298648 })
+      expect(result).to eq({ lat: 2506271416, lng: 2356862483 })
     end
   end
 
@@ -24,7 +24,7 @@ describe Asari::Geography do
       result = convert.coordinate_box(lat: 45.52, lng: 122.682, meters: 5000)
       expect(result).to eq({
         lat: 2505771415..2506771417,
-        lng: 111275772..111322995
+        lng: 2358261557..2359262357
       })
     end
   end

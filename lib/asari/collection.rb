@@ -13,6 +13,7 @@ class Asari
     attr_reader :page_size
     attr_reader :total_entries
     attr_reader :total_pages
+    attr_reader :facets
 
     # Internal: method for returning a sandbox-friendly empty search result.
     #
@@ -33,11 +34,16 @@ class Asari
       resp = httparty_response.parsed_response
       @total_entries = resp["hits"]["found"]
       @page_size = page_size
+      
 
       complete_pages = (@total_entries / @page_size)
       @total_pages = (@total_entries % @page_size > 0) ? complete_pages + 1 : complete_pages
       # There's always one page, even for no results
       @total_pages = 1 if @total_pages == 0
+      # we cat facets to collection.
+      if resp["facets"].present?
+        @facets = resp["facets"]
+      end
 
       start = resp["hits"]["start"]
       @current_page = (start / page_size) + 1

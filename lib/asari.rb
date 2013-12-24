@@ -64,18 +64,21 @@ class Asari
   # Raises: SearchException if there's an issue communicating the request to
   #   the server.
   def search(term, options = {})
+    
     return Asari::Collection.sandbox_fake if self.class.mode == :sandbox
     term,options = "",term if term.is_a?(Hash) and options.empty?
-
+    
     bq = boolean_query(options[:filter]) if options[:filter]
     page_size = options[:page_size].nil? ? 10 : options[:page_size].to_i
+    facet = options[:facet].nil? ? nil : options[:facet].collect {|h| h.to_s }.join(",")
 
     url = "http://search-#{search_domain}.#{aws_region}.cloudsearch.amazonaws.com/#{api_version}/search"
     url += "?q=#{CGI.escape(term.to_s)}"
     url += "&bq=#{CGI.escape(bq)}" if options[:filter]
     url += "&size=#{page_size}"
+    url += "&facet=#{facet}" unless facet.nil?
     url += "&return-fields=#{options[:return_fields].join ','}" if options[:return_fields]
-
+    
     if options[:page]
       start = (options[:page].to_i - 1) * page_size
       url << "&start=#{start}"

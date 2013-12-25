@@ -71,6 +71,7 @@ class Asari
     bq = boolean_query(options[:filter]) if options[:filter]
     page_size = options[:page_size].nil? ? 10 : options[:page_size].to_i
     facet = options[:facet].nil? ? nil : options[:facet].collect {|h| h.to_s }.join(",")
+    facet_constraints = options[:facet_constraints].nil? ? nil : facet_constraint_build(options[:facet_constraints])
 
     url = "http://search-#{search_domain}.#{aws_region}.cloudsearch.amazonaws.com/#{api_version}/search"
     url += "?q=#{CGI.escape(term.to_s)}"
@@ -78,6 +79,7 @@ class Asari
     url += "&size=#{page_size}"
     url += "&facet=#{facet}" unless facet.nil?
     url += "&return-fields=#{options[:return_fields].join ','}" if options[:return_fields]
+    url += "#{facet_constraints}" unless facet_constraints.nil?
     
     if options[:page]
       start = (options[:page].to_i - 1) * page_size
@@ -215,6 +217,12 @@ class Asari
       end
     }
     reduce.call(terms)
+  end
+
+  # Private: Builds the facet constraints from a passed hash 
+  # It turns facet_constraints: { product_price: '0..25,25..50,50..100,100..250,250..'} into "&facet-product_price-constraints=0..25,25..50,50..100,100..250,250.."
+  def facet_constraint_build(facet_constraints = {})
+    facet_constraints.collect {|fc| "&facet-#{fc[0].to_s}-constraints=#{fc[1]}" }.join('')
   end
 
   def normalize_rank(rank)

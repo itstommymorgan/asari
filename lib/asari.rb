@@ -74,13 +74,13 @@ class Asari
     facet_constraints = options[:facet_constraints].nil? ? nil : facet_constraint_build(options[:facet_constraints])
 
     url = "http://search-#{search_domain}.#{aws_region}.cloudsearch.amazonaws.com/#{api_version}/search"
-    url += "?q=#{CGI.escape(term.to_s)}"
+    url += "?q=#{CGI.escape(term.to_s)}" unless term.nil?
     url += "&bq=#{CGI.escape(bq)}" if options[:filter]
     url += "&size=#{page_size}"
     url += "&facet=#{facet}" unless facet.nil?
     url += "&return-fields=#{options[:return_fields].join ','}" if options[:return_fields]
     url += "#{facet_constraints}" unless facet_constraints.nil?
-    
+
     if options[:page]
       start = (options[:page].to_i - 1) * page_size
       url << "&start=#{start}"
@@ -210,7 +210,7 @@ class Asari
           if value.is_a?(Range) || value.is_a?(Integer)
             memo += " #{key}:#{value}"
           else
-            memo += " #{key}:'#{value}'" unless value.to_s.empty?
+            memo += " #{key}:#{value}" unless value.to_s.empty?
           end
         end
         memo

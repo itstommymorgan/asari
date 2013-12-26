@@ -210,7 +210,7 @@ class Asari
           if value.is_a?(Range) || value.is_a?(Integer)
             memo += " #{key}:#{value}"
           else
-            memo += " #{key}:#{value}" unless value.to_s.empty?
+            memo += " #{key}:'#{value}'" unless value.to_s.empty?
           end
         end
         memo

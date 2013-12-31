@@ -5,6 +5,7 @@ require "asari/exceptions"
 require "asari/geography"
 
 require "httparty"
+require "curb"
 
 require "ostruct"
 require "json"
@@ -68,16 +69,18 @@ class Asari
     return Asari::Collection.sandbox_fake if self.class.mode == :sandbox
     term,options = "",term if term.is_a?(Hash) and options.empty?
     
-    bq = boolean_query(options[:filter]) if options[:filter]
+    bq = boolean_query(options[:filter]).gsub(/\s+/, ' ') if options[:filter]
     page_size = options[:page_size].nil? ? 10 : options[:page_size].to_i
     facet = options[:facet].nil? ? nil : options[:facet].collect {|h| h.to_s }.join(",")
     facet_constraints = options[:facet_constraints].nil? ? nil : facet_constraint_build(options[:facet_constraints])
+    rank = options[:rank].nil? ? nil : options[:rank].to_s
 
-    url = "http://search-#{search_domain}.#{aws_region}.cloudsearch.amazonaws.com/#{api_version}/search"
-    url += "?q=#{CGI.escape(term.to_s)}" unless term.nil?
+    url = "http://search-#{search_domain}.#{aws_region}.cloudsearch.amazonaws.com/#{api_version}/search?"
+    url += "q=#{CGI.escape(term.to_s)}" unless term.nil?
     url += "&bq=#{CGI.escape(bq)}" if options[:filter]
     url += "&size=#{page_size}"
     url += "&facet=#{facet}" unless facet.nil?
+    url += "&rank=#{rank}" unless rank.nil?
     url += "&return-fields=#{options[:return_fields].join ','}" if options[:return_fields]
     url += "#{facet_constraints}" unless facet_constraints.nil?
 
@@ -205,10 +208,18 @@ class Asari
       hash.reduce("") do |memo, (key, value)|
         if %w(and or not).include?(key.to_s) && value.is_a?(Hash)
           sub_query = reduce.call(value)
-          memo += "(#{key}#{sub_query})" unless sub_query.empty?
+          memo += "(#{key} #{sub_query})" unless sub_query.empty?
         else
           if value.is_a?(Range) || value.is_a?(Integer)
             memo += " #{key}:#{value}"
+          elsif value.is_a?(Array)
+            memo += " " + value.collect{|c| 
+              if c.is_a?(Range) || c.is_a?(Integer)
+                " #{key}:#{c}"
+              else
+                " #{key}:'#{c}'"
+              end
+            }.join(' ')
           else
             memo += " #{key}:'#{value}'" unless value.to_s.empty?
           end

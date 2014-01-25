@@ -212,6 +212,7 @@ Gem requirements/etc. should be handled by Bundler.
 * [Emil Soman](https://github.com/emilsoman "emilsoman on GitHub")
 * [Chris Vincent](https://github.com/cvincent "cvincent on GitHub")
 * [Kyle Meyer](https://github.com/kaiuhl "kaiuhl on GitHub")
+* [Brentan Alexander](https://github.com/brentan "brentan on GitHub")
 
 ## License
 Copyright (C) 2012 by Tommy Morgan

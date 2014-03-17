@@ -30,4 +30,24 @@ describe "Asari" do
     end
   end
 
+  describe "convert_date_or_time" do
+    subject { @asari.send('convert_date_or_time', field) }
+
+    context "Date, Time, DateTime and its subclasses" do
+      [Time, Date, DateTime, ActiveSupport::TimeWithZone].each do |klass|
+        let(:field) { klass.new(0,0) }
+
+        its(:class) { should == Fixnum }
+      end
+    end
+
+    context "Other random Classes" do
+      ["string", 5, 1.0, :test].each do |obj|
+        let(:field) { obj }
+
+        its(:class) { should == field.class }
+      end
+    end
+  end
+
 end

@@ -1,6 +1,7 @@
 require 'asari'
 require 'asari/active_record'
 require 'ostruct'
+require 'active_support/time_with_zone'
 
 # Fake production mode to test.
 Asari.mode = :production

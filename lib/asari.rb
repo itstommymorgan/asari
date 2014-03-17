@@ -221,7 +221,7 @@ class Asari
   end
 
   def convert_date_or_time(obj)
-    return obj unless [Time, Date, DateTime].include?(obj.class)
+    return obj unless [Time, Date, DateTime].any? {|klass| obj.is_a? klass }
     obj.to_time.to_i
   end
 end

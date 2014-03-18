@@ -202,8 +202,10 @@ class Asari
           sub_query = reduce.call(value)
           memo += "(#{key}#{sub_query})" unless sub_query.empty?
         else
-          if value.is_a?(Range) || value.is_a?(Integer)
+          if value.is_a?(Integer)
             memo += " #{key}:#{value}"
+          elsif value.is_a?(Range)
+            memo += " #{key}:#{print_range(value)}"
           else
             memo += " #{key}:'#{value}'" unless value.to_s.empty?
           end
@@ -223,6 +225,10 @@ class Asari
   def convert_date_or_time(obj)
     return obj unless [Time, Date, DateTime].any? {|klass| obj.is_a? klass }
     obj.to_time.to_i
+  end
+
+  def print_range(range)
+    (range.begin.to_f.infinite? ? '' : range.begin.to_s) + '..' + (range.end.to_f.infinite? ? '' : range.end.to_s)
   end
 end
 

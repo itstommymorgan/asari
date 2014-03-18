@@ -30,7 +30,7 @@ describe "Asari" do
     end
   end
 
-  describe "convert_date_or_time" do
+  describe "#convert_date_or_time" do
     subject { @asari.send('convert_date_or_time', field) }
 
     context "Date, Time, DateTime and its subclasses" do
@@ -47,6 +47,28 @@ describe "Asari" do
 
         its(:class) { should == field.class }
       end
+    end
+  end
+
+  describe "#print_range" do
+    subject { @asari.send("print_range", range) }
+
+    context "common Range" do
+      let(:range) { 1..2 }
+
+      it { should == '1..2' }
+    end
+
+    context "beginning with Infinite" do
+      let(:range) { -Float::INFINITY..2 }
+
+      it { should == '..2' }
+    end
+
+    context "ending with Infinite" do
+      let(:range) { 1..Float::INFINITY }
+
+      it { should == '1..' }
     end
   end
 

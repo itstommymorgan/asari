@@ -58,6 +58,11 @@ class Asari
     def offset
       (@current_page - 1) * @page_size
     end
+    
+    # for kaminari
+    def limit_value
+      self.page_size
+    end
 
     # Public: replace the current data collection with a new data collection,
     # without losing pagination information. Useful for mapping results, etc.

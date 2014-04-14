@@ -86,10 +86,7 @@ class Asari
         if self.asari_when
           return unless asari_should_index?(obj)
         end
-        data = {}
-        self.asari_fields.each do |field|
-          data[field] = obj.send(field) || ""
-        end
+        data = self.asari_data_item(obj)
         self.asari_instance.add_item(obj.send(:id), data)
       rescue Asari::DocumentUpdateException => e
         self.asari_on_error(e)
@@ -104,13 +101,21 @@ class Asari
             return
           end
         end
-        data = {}
-        self.asari_fields.each do |field|
-          data[field] = obj.send(field)
-        end
+        data = self.asari_data_item(obj)
         self.asari_instance.update_item(obj.send(:id), data)
       rescue Asari::DocumentUpdateException => e
         self.asari_on_error(e)
+      end
+
+      # Gather all the data to send to the CloudSearch
+      # Can be overriden by the model to adapt to special cases.
+      # Returns a hash of the data to send to the CloudSearch
+      def asari_data_item(obj)
+        data = {}
+        self.asari_fields.each do |field|
+          data[field] = obj.send(field) || ""
+        end
+        data
       end
 
       # Internal: method for removing a soon-to-be deleted item from the CloudSearch

@@ -5,7 +5,7 @@
 [![Build Status](https://travis-ci.org/lgleasain/asari.svg?branch=master)](https://travis-ci.org/lgleasain/asari)
 
 Asari is a Ruby wrapper for AWS CloudSearch, with optional ActiveRecord support
-for easy integration with your Rails apps.
+for easy integration with your Rails apps with facet support.
 
 #### Why Asari?
 
@@ -82,6 +82,7 @@ with will\_paginate:
     results.current_page  #=> 10
     results.offset        #=> 300
     results.page_size     #=> 30
+    result.facets         #=> will give you facet results
 
 #### Retrieving Data From Index Fields
 

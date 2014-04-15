@@ -5,6 +5,7 @@ require "asari/exceptions"
 require "asari/geography"
 
 require "httparty"
+require "curb"
 
 require "ostruct"
 require "json"
@@ -64,17 +65,22 @@ class Asari
   # Raises: SearchException if there's an issue communicating the request to
   #   the server.
   def search(term, options = {})
+    
     return Asari::Collection.sandbox_fake if self.class.mode == :sandbox
     term,options = "",term if term.is_a?(Hash) and options.empty?
-
-    bq = boolean_query(options[:filter]) if options[:filter]
+    
+    bq = boolean_query(options[:filter]).gsub(/\s+/, ' ') if options[:filter]
     page_size = options[:page_size].nil? ? 10 : options[:page_size].to_i
+    facet = options[:facet].nil? ? nil : options[:facet].collect {|h| h.to_s }.join(",")
+    facet_constraints = options[:facet_constraints].nil? ? nil : facet_constraint_build(options[:facet_constraints])
 
-    url = "http://search-#{search_domain}.#{aws_region}.cloudsearch.amazonaws.com/#{api_version}/search"
-    url += "?q=#{CGI.escape(term.to_s)}"
+    url = "http://search-#{search_domain}.#{aws_region}.cloudsearch.amazonaws.com/#{api_version}/search?"
+    url += "q=#{CGI.escape(term.to_s)}" unless term.nil?
     url += "&bq=#{CGI.escape(bq)}" if options[:filter]
     url += "&size=#{page_size}"
+    url += "&facet=#{facet}" unless facet.nil?
     url += "&return-fields=#{options[:return_fields].join ','}" if options[:return_fields]
+    url += "#{facet_constraints}" unless facet_constraints.nil?
 
     if options[:page]
       start = (options[:page].to_i - 1) * page_size
@@ -200,10 +206,18 @@ class Asari
       hash.reduce("") do |memo, (key, value)|
         if %w(and or not).include?(key.to_s) && value.is_a?(Hash)
           sub_query = reduce.call(value)
-          memo += "(#{key}#{sub_query})" unless sub_query.empty?
+          memo += "(#{key} #{sub_query})" unless sub_query.empty?
         else
           if value.is_a?(Range) || value.is_a?(Integer)
             memo += " #{key}:#{value}"
+          elsif value.is_a?(Array)
+            memo += " " + value.collect{|c| 
+              if c.is_a?(Range) || c.is_a?(Integer)
+                " #{key}:#{c}"
+              else
+                " #{key}:'#{c}'"
+              end
+            }.join(' ')
           else
             memo += " #{key}:'#{value}'" unless value.to_s.empty?
           end
@@ -212,6 +226,12 @@ class Asari
       end
     }
     reduce.call(terms)
+  end
+
+  # Private: Builds the facet constraints from a passed hash 
+  # It turns facet_constraints: { product_price: '0..25,25..50,50..100,100..250,250..'} into "&facet-product_price-constraints=0..25,25..50,50..100,100..250,250.."
+  def facet_constraint_build(facet_constraints = {})
+    facet_constraints.collect {|fc| "&facet-#{fc[0].to_s}-constraints=#{fc[1]}" }.join('')
   end
 
   def normalize_rank(rank)

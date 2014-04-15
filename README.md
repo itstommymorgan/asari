@@ -2,6 +2,8 @@
 
 ## Description
 
+[![Build Status](https://travis-ci.org/lgleasain/asari.svg?branch=master)](https://travis-ci.org/lgleasain/asari)
+
 Asari is a Ruby wrapper for AWS CloudSearch, with optional ActiveRecord support
 for easy integration with your Rails apps.
 
@@ -28,7 +30,7 @@ Amazon Cloud Search will give you a Search Endpoint and Document Endpoint.  When
 #### Boolean Query Usage
 
     asari.search(filter: { and: { title: "donut", type: "cruller" }})
-    asari.search("boston creme", filter: { and: { title: "donut", or: { type: "cruller", type: "twist" }}}) # Full text search and nested boolean logic
+    asari.search("boston creme", filter: { and: { title: "donut", or: { type: "cruller|twist" }}}) # Full text search and nested boolean logic
 
 For more information on how to use Cloudsearch boolean queries, [see the
 documentation.](http://docs.aws.amazon.com/cloudsearch/latest/developerguide/booleansearch.html)

@@ -1,4 +1,4 @@
-require_relative '../spec_helper'
+require_relative '../asari_spec_helper'
 
 describe Asari do
   describe Asari::Collection do

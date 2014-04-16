@@ -1,0 +1,15 @@
+TestModel:
+  name: 
+    index_field_type: text
+    search_enabled: true
+  amount: 
+    index_field_type: uint
+    search_enabled: true
+  last_updated:
+    index_field_type: uint
+    search_enabled: false
+  bee_larvae_type:
+    index_field_type: literal
+HoneyBadger:
+  name:
+    index_field_type: text

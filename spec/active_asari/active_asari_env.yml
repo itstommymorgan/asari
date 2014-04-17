@@ -1,0 +1,14 @@
+test:
+  domain_prefix: test
+  access_key: my_great_key
+  secrite_access_key: not_a_big_secret
+  access_permissions:
+  - ip_address: 192.168.66.23/32  
+  - ip_address: 23.44.23.25/32
+development:
+  domain_prefix: test
+  access_key: my_great_key
+  secrite_access_key: not_a_big_secret
+  access_permissions:
+  - ip_address: 192.168.66.23/32  
+  - ip_address: 23.44.23.25/32

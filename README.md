@@ -171,6 +171,16 @@ In the above example we decide that, instead of raising exceptions every time,
 we're going to log exception data to Airbrake so that we can review it later and
 then return true so that the AR lifecycle continues normally.
 
+While having asari auto index,  delete and update records can be handy,  it doesn't provide a great failover mechanism if you are having communication issues between your system and cloud search.  To enable delayed indexing add the following before requiring 'asari/active_record'.  
+
+    class Asari
+      module ActiveRecord
+        DELAYED_ASARI_INDEX = true
+      end
+    end
+
+You can then manually trigger deletes,  adds and updates by calling asari_remove_from_index,  asari_add_to_index and asari_update_in_index on your model.
+
 #### AWS Region
 
 By default, Asari assumes that you're operating in us-east-1, which is probably

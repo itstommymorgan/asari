@@ -7,13 +7,18 @@ class Asari
   # (respectively).
   #
   module ActiveRecord
+
+    DELAYED_ASARI_INDEX = false
+
     def self.included(base)
       base.extend(ClassMethods)
 
-      base.class_eval do
-        before_destroy :asari_remove_from_index
-        after_create :asari_add_to_index
-        after_update :asari_update_in_index
+      if !DELAYED_ASARI_INDEX
+        base.class_eval do
+          before_destroy :asari_remove_from_index
+          after_create :asari_add_to_index
+          after_update :asari_update_in_index
+        end
       end
     end
 
@@ -66,7 +71,7 @@ class Asari
         self.class_variable_set(:@@asari_instance, Asari.new(search_domain,aws_region))
         self.class_variable_set(:@@asari_fields, fields)
         self.class_variable_set(:@@asari_when, options.delete(:when))
-      end
+        end
 
       def asari_instance
         self.class_variable_get(:@@asari_instance)

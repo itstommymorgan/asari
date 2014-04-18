@@ -1,60 +1,83 @@
 require_relative '../asari_spec_helper'
+require_relative '../helpers/active_record_fake_no_auto_index'
 
 describe Asari do
   describe Asari::ActiveRecord do
     describe "when CloudSearch is responding without error" do
-      before :each do
-        @asari = double()
-        ActiveRecordFake.class_variable_set(:@@asari_instance, @asari)
+      describe "with automatic indexing" do
+        before :each do
+          @asari = double()
+          ActiveRecordFake.class_variable_set(:@@asari_instance, @asari)
+        end
+
+        it "correctly sets up a before_destroy listener" do
+          expect(ActiveRecordFake.instance_variable_get(:@before_destroy)).to eq(:asari_remove_from_index)
+        end
+
+        it "correctly sets up an after_create listener" do
+          expect(ActiveRecordFake.instance_variable_get(:@after_create)).to eq(:asari_add_to_index)
+        end
+
+        it "correctly sets up an after_update listener" do
+          expect(ActiveRecordFake.instance_variable_get(:@after_update)).to eq(:asari_update_in_index)
+        end
+
+        it "will automatically attempt to remove itself from the index" do
+          @asari.should_receive(:remove_item).with(1)
+          ActiveRecordFake.new.asari_remove_from_index
+        end
+
+        it "will automatically add itself to the index" do
+          @asari.should_receive(:add_item).with(1, {:name => "Fritters", :email => "fritters@aredelicious.com"})
+          ActiveRecordFake.new.asari_add_to_index
+        end
+
+        it "will automatically update itself in the index" do
+          @asari.should_receive(:update_item).with(1, {:name => "Fritters", :email => "fritters@aredelicious.com"})
+          ActiveRecordFake.new.asari_update_in_index
+        end
+
+        it "will allow you to search for items with the index" do
+          @asari.should_receive(:search).with("fritters", {}).and_return(["1"])
+
+          ActiveRecordFake.asari_find("fritters")
+        end
+
+        it "will return a list of model objects when you search" do
+          @asari.should_receive(:search).with("fritters", {}).and_return(["1"])
+
+          results = ActiveRecordFake.asari_find("fritters")
+          expect(results.class).to eq(Array)
+          expect(results[0].class).to eq(ActiveRecordFake)
+        end
+
+        it "will return an empty list when you search for a term that isn't in the index" do
+          @asari.should_receive(:search).with("veggie burgers", {}).and_return([])
+
+          results = ActiveRecordFake.asari_find("veggie burgers")
+          expect(results.class).to eq(Array)
+          expect(results.size).to eq(0)
+        end
       end
 
-      it "correctly sets up a before_destroy listener" do
-        expect(ActiveRecordFake.instance_variable_get(:@before_destroy)).to eq(:asari_remove_from_index)
-      end
+      describe "with automatic indexing turned off" do
 
-      it "correctly sets up an after_create listener" do
-        expect(ActiveRecordFake.instance_variable_get(:@after_create)).to eq(:asari_add_to_index)
-      end
+        before :each do
+          @asari = double()
+          ActiveRecordFakeNoAutoIndex.class_variable_set(:@@asari_instance, @asari)
+        end
 
-      it "correctly sets up an after_update listener" do
-        expect(ActiveRecordFake.instance_variable_get(:@after_update)).to eq(:asari_update_in_index)
-      end
+        it "does not set up a before_destroy listener" do
+          expect(ActiveRecordFakeNoAutoIndex.instance_variable_get(:@before_destroy)).to eq(nil)
+        end
 
-      it "will automatically attempt to remove itself from the index" do
-        @asari.should_receive(:remove_item).with(1)
-        ActiveRecordFake.new.asari_remove_from_index
-      end
+        it "does not set up a after_create listener" do
+          expect(ActiveRecordFakeNoAutoIndex.instance_variable_get(:@after_create)).to eq(nil)
+        end
 
-      it "will automatically add itself to the index" do
-        @asari.should_receive(:add_item).with(1, {:name => "Fritters", :email => "fritters@aredelicious.com"})
-        ActiveRecordFake.new.asari_add_to_index
-      end
-
-      it "will automatically update itself in the index" do
-        @asari.should_receive(:update_item).with(1, {:name => "Fritters", :email => "fritters@aredelicious.com"})
-        ActiveRecordFake.new.asari_update_in_index
-      end
-
-      it "will allow you to search for items with the index" do
-        @asari.should_receive(:search).with("fritters", {}).and_return(["1"])
-
-        ActiveRecordFake.asari_find("fritters")
-      end
-
-      it "will return a list of model objects when you search" do
-        @asari.should_receive(:search).with("fritters", {}).and_return(["1"])
-
-        results = ActiveRecordFake.asari_find("fritters")
-        expect(results.class).to eq(Array)
-        expect(results[0].class).to eq(ActiveRecordFake)
-      end
-
-      it "will return an empty list when you search for a term that isn't in the index" do
-        @asari.should_receive(:search).with("veggie burgers", {}).and_return([])
-
-        results = ActiveRecordFake.asari_find("veggie burgers")
-        expect(results.class).to eq(Array)
-        expect(results.size).to eq(0)
+        it "does not set up a after_update listener" do
+          expect(ActiveRecordFakeNoAutoIndex.instance_variable_get(:@after_update)).to eq(nil)
+        end
       end
     end
 

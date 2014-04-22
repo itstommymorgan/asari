@@ -129,6 +129,21 @@ describe Asari do
       })
     end
 
+    it "supports ruby native numeric ranges" do
+      HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=&bq=%28and+bottles%3A1..99+on%3A%27wall%27%29&size=10")
+      @asari.search(filter: { and: { bottles: (1..99), on: "wall"} })
+    end
+
+    it "it supports numeric ranges where the lower bound is open-ended" do
+      HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=&bq=%28and+bottles%3A..99+on%3A%27wall%27%29&size=10")
+      @asari.search(filter: { and: { bottles: '..99', on: "wall"} })
+    end
+
+    it "it supports numeric ranges where the upper bound is open-ended" do
+      HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=&bq=%28and+bottles%3A1..+on%3A%27wall%27%29&size=10")
+      @asari.search(filter: { and: { bottles: '1..', on: "wall"} })
+    end
+
     it "fails gracefully with empty params" do
       HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=&bq=%28or+is_donut%3A%27true%27%29&size=10")
       @asari.search(filter: { or: { is_donut: true, and:

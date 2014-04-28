@@ -31,7 +31,7 @@ describe Hasher do
     its([:nachos]) {should eql nil}
   end 
 
-  context 'add_to_index' do
+  context 'add/update/delete_index' do
     let(:original_hash) {{ active_asari_id: 88,
       name: 'honey badger',
       amount: 33,
@@ -43,11 +43,23 @@ describe Hasher do
       bee_larvae_type: nil}}
     let(:domain_instance) {double 'domain_instance'}
 
+    before :each do
+      Hasher.should_receive(:get_domain_instance).with('TestModel').and_return domain_instance
+    end
+
     it 'should send a request to add an item to Cloud Search' do
       domain_instance.should_receive(:add_item).with(88, asari_hash).and_return nil
-      Hasher.should_receive(:get_domain_instance).with('TestModel').and_return domain_instance
       Hasher.add_to_index('TestModel', original_hash).should eql nil
     end
 
+    it 'should send a request to update an item to Cloud Search' do
+      domain_instance.should_receive(:update_item).with(88, asari_hash).and_return nil
+      Hasher.update_index('TestModel', original_hash).should eql nil
+    end
+
+    it 'should send a request to delete an item to Cloud Search' do
+      domain_instance.should_receive(:delete_item).with(88).and_return nil
+      Hasher.delete_item('TestModel', 88).should eql nil
+    end
   end 
 end

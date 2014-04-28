@@ -22,10 +22,24 @@ class Hasher
     end
 
     def add_to_index(domain, hash)
-      domain_instance = get_domain_instance(domain)
-      asari_hash = create_active_asari_hash domain, hash
-      domain_instance.add_item asari_hash[:active_asari_id], asari_hash
+      common_index domain, hash, 'add_item'
     end
 
+    def update_index(domain, hash)
+      common_index domain, hash, 'update_item'
+    end
+    
+    def delete_item(domain, active_asari_id)
+      domain_instance = get_domain_instance(domain)
+      domain_instance.delete_item active_asari_id
+    end
+
+    private
+
+    def common_index(domain, hash, command)
+      domain_instance = get_domain_instance(domain)
+      asari_hash = create_active_asari_hash domain, hash
+      domain_instance.send command, asari_hash[:active_asari_id], asari_hash
+    end
   end
 end

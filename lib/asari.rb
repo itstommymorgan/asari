@@ -204,8 +204,10 @@ class Asari
         else
           if value.is_a?(Range) || value.is_a?(Integer)
             memo += " #{key}:#{value}"
-          else
-            memo += " #{key}:'#{value}'" unless value.to_s.empty?
+          elsif value.is_a?(String) && value =~ /\A\d*\.\.\d*\Z/
+            memo += " #{key}:#{value}"
+          elsif !value.to_s.empty?
+            memo += " #{key}:'#{value.to_s}'"
           end
         end
         memo

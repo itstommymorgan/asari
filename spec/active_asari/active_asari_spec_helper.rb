@@ -15,5 +15,5 @@ require 'active_asari/active_record'
 require 'aws'
 require 'active_asari/model/test_model'
 require 'active_asari/model/create_test_model'
-
+require 'active_asari/hasher'
 

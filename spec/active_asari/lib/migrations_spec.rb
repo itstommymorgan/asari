@@ -13,84 +13,113 @@ describe 'migrations' do
     context 'literal fields' do
       before :each do
         expected_index_field_request = {:domain_name => 'test-beavis-butthead', :index_field => 
-          {:index_field_name => 'band_name', :index_field_type => 'literal', :literal_options =>
-            {:search_enabled => false, :result_enabled => true}}}
-            migrations.connection.should_receive(:define_index_field).with(expected_index_field_request).and_return CREATE_LITERAL_INDEX_RESPONSE     
+                                        {:index_field_name => 'band_name', :index_field_type => 'literal', :literal_options =>
+                                         {:search_enabled => false, :return_enabled => true}}}
+        migrations.connection.should_receive(:define_index_field).with(expected_index_field_request).and_return CREATE_LITERAL_INDEX_RESPONSE     
       end
 
       it 'should add a index to the domain' do
-        migrations.create_index_field('BeavisButthead', 'band_name' => { 'index_field_type' => 'literal', 'search_enabled' => false})
+        migrations.create_index_field('BeavisButthead', 'band_name' => { 'index_field_type' => 'literal', 'search_enabled' => false, 'return_enabled' => true})
       end
-
-      it 'should default search enabled to false if it is not specified' do
-        migrations.create_index_field('BeavisButthead', 'band_name' => { 'index_field_type' => 'literal'})
-      end
-
-      it 'should default search enabled to false if it is not specified as a blank string' do
-        migrations.create_index_field('BeavisButthead', 'band_name' => { 'index_field_type' => 'literal', 'search_enabled' => ''})
-      end
-
     end
 
     it 'should set search enabled to true if it is a string that evaluates to true' do
       expected_index_field_request = {:domain_name => 'test-beavis-butthead', :index_field => 
-        {:index_field_name => 'band_name', :index_field_type => 'literal', :literal_options =>
-          {:search_enabled => true, :result_enabled => true}}}
-          migrations.connection.should_receive(:define_index_field).with(expected_index_field_request).and_return CREATE_LITERAL_INDEX_RESPONSE     
-          migrations.create_index_field('BeavisButthead', 'band_name' => { 'index_field_type' => 'literal', 'search_enabled' => true})
+                                      {:index_field_name => 'band_name', :index_field_type => 'literal', :literal_options =>
+                                       {:search_enabled => true, :return_enabled => true}}}
+      migrations.connection.should_receive(:define_index_field).with(expected_index_field_request).and_return CREATE_LITERAL_INDEX_RESPONSE     
+      migrations.create_index_field('BeavisButthead', 'band_name' => { 'index_field_type' => 'literal', 'search_enabled' => true, 'return_enabled' => true})
     end
 
-    it 'should add a text index to the domain' do
-      expected_index_field_request = {:domain_name => 'test-beavis', :index_field => 
-        {:index_field_name => 'tv_location', :index_field_type => 'text', :text_options =>
-          {:result_enabled => true}}}
+    context 'parameteter options' do
+      let(:index_type) {'text'}
+      shared_examples_for 'code that adds to and indexes the domain' do    
+        it 'should add a index to the domain with options' do
+          expected_index_field_request = {domain_name: 'test-beavis', index_field: 
+                                          {index_field_name: 'tv_location', index_field_type: index_type, "#{index_type}_options".to_sym =>
+                                           {return_enabled: true}}}
           migrations.connection.should_receive(:define_index_field).with(expected_index_field_request).and_return CREATE_TEXT_INDEX_RESPONSE 
-          migrations.create_index_field('beavis', 'tv_location' => { 'index_field_type' => 'text'})
-    end
+          migrations.create_index_field('beavis', 'tv_location' => { 'index_field_type' => index_type, 'return_enabled' => true})
+        end
 
-    it 'should add a uint index to the domain' do
-      expected_index_field_request = {:domain_name => 'test-beavis', :index_field => 
-        {:index_field_name => 'num_tvs', :index_field_type => 'uint'}}
-        migrations.connection.should_receive(:define_index_field).with(expected_index_field_request).and_return CREATE_UINT_INDEX_RESPONSE 
-        migrations.create_index_field('beavis', 'num_tvs' => { 'index_field_type' => 'uint'})
-    end
-  end
+        it 'should add a index to the domain with default options' do
+          expected_index_field_request = {domain_name: 'test-beavis', index_field: 
+                                          {index_field_name: 'tv_location', index_field_type: index_type, "#{index_type}_options".to_sym =>
+                                           {}}}
+          migrations.connection.should_receive(:define_index_field).with(expected_index_field_request).and_return CREATE_TEXT_INDEX_RESPONSE 
+          migrations.create_index_field('beavis', 'tv_location' => { 'index_field_type' => index_type})
+        end
+      end
 
-  context 'update_service_access_policies' do
-    it 'should allow all access for ip addresses specified in the configuration file' do
-      access_policies = "{\"Statement\":[{\"Effect\":\"Allow\",\"Action\":\"*\",\"Resource\":\"*\",\"Condition\":{\"IpAddress\":{\"aws:SourceIp\":[\"192.168.66.23/32\"]}}},{\"Effect\":\"Allow\",\"Action\":\"*\",\"Resource\":\"*\",\"Condition\":{\"IpAddress\":{\"aws:SourceIp\":[\"23.44.23.25/32\"]}}}]}"
-      migrations.connection.should_receive(:update_service_access_policies).with(:domain_name => 'beavis',
-                                                                                 :access_policies => access_policies)
-      ENV['RAILS_ENV'] = nil
-      ENV['RACK_ENV'] = 'test'
-      migrations.update_service_access_policies 'beavis'
+      context 'text index' do
+        let(:index_type) {'text'}
+        it_behaves_like 'code that adds to and indexes the domain'
+      end
+
+      context 'date-array index' do
+        let(:index_type) {'date-array'}
+        it_behaves_like 'code that adds to and indexes the domain'
+      end
+
+      context 'double index' do
+        let(:index_type) {'double'}
+        it_behaves_like 'code that adds to and indexes the domain'
+      end
+
+      context 'double-array index' do
+        let(:index_type) {'double-array'}
+        it_behaves_like 'code that adds to and indexes the domain'
+      end
+
+      context 'int index' do
+        let(:index_type) {'int'}
+        it_behaves_like 'code that adds to and indexes the domain'
+      end
+
+      context 'int-array index' do
+        let(:index_type) {'int-array'}
+        it_behaves_like 'code that adds to and indexes the domain'
+      end
+
+      context 'latlon index' do
+        let(:index_type) {'latlon'}
+        it_behaves_like 'code that adds to and indexes the domain'
+      end
+
+      context 'literal index' do
+        let(:index_type) {'literal'}
+        it_behaves_like 'code that adds to and indexes the domain'
+      end
+
+      context 'literal-array index' do
+        let(:index_type) {'literal-array'}
+        it_behaves_like 'code that adds to and indexes the domain'
+      end
+
+      context 'text-array index' do
+        let(:index_type) {'text-array'}
+        it_behaves_like 'code that adds to and indexes the domain'
+      end
     end
   end
 
   context 'domain' do
 
-    it 'should create a domain if one doesnt exist' do
-      migrations.connection.should_receive(:create_domain).with({:domain_name => 'test-beavis-butthead'}).and_return CREATE_DOMAIN_RESPONSE    
-      migrations.create_domain 'BeavisButthead'
-    end
-
-    it 'should create indexes for all items in the domain and create the domain' do
-      migrations.should_receive(:create_domain).once.with 'TestModel'
+    it 'should create indexes for all items in the domain' do
       migrations.should_receive(:create_index_field).once.with('TestModel', 
                                                                'name' => { 'index_field_type' => 'text', 
-                                                                 'search_enabled' => true})
+                                                                           'search_enabled' => true})
       migrations.should_receive(:create_index_field).once.with('TestModel', 
-                                                               'amount' => { 'index_field_type' => 'uint', 
-                                                                 'search_enabled' => true})
+                                                               'amount' => { 'index_field_type' => 'int', 
+                                                                             'search_enabled' => true})
       migrations.should_receive(:create_index_field).once.with('TestModel', 
-                                                               'last_updated' => { 'index_field_type' => 'uint', 
-                                                                 'search_enabled' => false})
+                                                               'last_updated' => { 'index_field_type' => 'int', 
+                                                                                   'search_enabled' => false})
       migrations.should_receive(:create_index_field).once.with('TestModel', 
                                                                'bee_larvae_type' => { 'index_field_type' => 'literal'})
       migrations.should_receive(:create_index_field).once.with('TestModel', 
-                                                               'active_asari_id' => { 'index_field_type' => 'uint'})
-      ActiveAsari.should_receive(:amazon_safe_domain_name).twice.with('TestModel').and_return 'test-model-666'
-      migrations.should_receive(:update_service_access_policies).once.with('test-model-666')
+                                                               'active_asari_id' => { 'index_field_type' => 'int', 'return_enabled' => true})
+      ActiveAsari.should_receive(:amazon_safe_domain_name).at_least(:once).with('TestModel').and_return 'test-model-666'
       migrations.connection.should_receive(:index_documents).with(:domain_name => 'test-model-666')
       migrations.migrate_domain 'TestModel'
     end

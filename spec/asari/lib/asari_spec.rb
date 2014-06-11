@@ -15,6 +15,12 @@ describe "Asari" do
       expect(@asari.api_version).to eq "2015-10-21"
     end
 
+    it "allows you to set a specific API version via a constant." do
+      ENV['CLOUDSEARCH_API_VERSION'] = '2013-01-01'
+      expect(@asari.api_version).to eq "2013-01-01"
+      ENV['CLOUDSEARCH_API_VERSION'] = nil
+    end
+
     it "allows you to set a specific aws region." do
       @asari.aws_region = "us-west-1"
       expect(@asari.aws_region).to eq("us-west-1")

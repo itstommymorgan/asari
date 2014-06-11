@@ -3,10 +3,10 @@ TestModel:
     index_field_type: text
     search_enabled: true
   amount: 
-    index_field_type: uint
+    index_field_type: int
     search_enabled: true
   last_updated:
-    index_field_type: uint
+    index_field_type: int
     search_enabled: false
   bee_larvae_type:
     index_field_type: literal

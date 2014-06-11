@@ -1,5 +1,5 @@
 
-class AWS::CloudSearch::Client
+class AWS::CloudSearch::Client::V20130101 
   def initialize
   end
 

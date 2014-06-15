@@ -44,6 +44,8 @@ For more information on how to use Cloudsearch structured compound queries (2013
 
 ### Geospatial Query Usage
 
+#### Api Version 2011-02-01
+
 While Cloudsearch does not natively support location search, you can implement rudimentary location search by representing latitude and longitude as integers in your search domain. Asari has a Geography module you can use to simplify the conversion of latitude and longitude to cartesian coordinates as well as the generation of a coordinate box to search within. Asari's Boolean Query syntax can then be used to search within the area. Note that because Cloudsearch only supports 32-bit unsigned integers, it is only possible to store latitude and longitude to two place values. This means very precise search isn't possible using Asari and Cloudsearch. 
 
     coordinates = Asari::Geography.degrees_to_int(lat: 45.52, lng: 122.68)
@@ -57,6 +59,10 @@ While Cloudsearch does not natively support location search, you can implement r
 
 For more information on how to use Cloudsearch for location search, [see the
 documentation.](http://docs.aws.amazon.com/cloudsearch/latest/developerguide/geosearch.html)
+
+#### Api Version 2013-01-01
+
+This version has native geospacial support but will need additional integration to get it into Asari.  Pull requests are welcome :)
 
 #### Sandbox Mode
 
@@ -293,18 +299,23 @@ Search parameters are passed directly to Amazon Cloud Search.  See it's document
 
 It's a gem named asari. Install it and make it available however you prefer.
 
-Asari is developed on ruby 1.9.3, and the ActiveRecord portion has been tested
-with Rails 3.2. I don't know off-hand of any reasons that it shouldn't work in
-other environments, but be aware that it hasn't (yet) been tested.
+Asari is developed on ruby 2.1.2, and the ActiveRecord portion has been tested
+with Rails 4.1.  It has also been tested on 1.9.x and JRuby.
+
+## Roadmap
+
+Two features that we want to get into Asari are facet support and suport for native geo-coordinate support in version 2013-01-01 of the Amazon API.  Pull requests are always welcome to get this out.
 
 ## Contributions
 
-If Asari interests you and you think you might want to contribute, hit me up on
+If Asari interests you and you think you might want to contribute, hit us up on
 Github. You can also just fork it and make some changes, but there's a better
 chance that your work won't be duplicated or rendered obsolete if you check in
 on the current development status first.
 
 Gem requirements/etc. should be handled by Bundler.
+
+Also,  we have maintained close to 100% test coverage on the project.  Your pull request will have a much better chance of being accepted if you write specs for it.
 
 ### Contributors
 

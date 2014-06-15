@@ -71,7 +71,7 @@ class Asari
         self.class_variable_set(:@@asari_instance, Asari.new(search_domain,aws_region))
         self.class_variable_set(:@@asari_fields, fields)
         self.class_variable_set(:@@asari_when, options.delete(:when))
-        end
+      end
 
       def asari_instance
         self.class_variable_get(:@@asari_instance)
@@ -93,6 +93,22 @@ class Asari
         end
         data = self.asari_data_item(obj)
         self.asari_instance.add_item(obj.send(:id), data)
+      rescue Asari::DocumentUpdateException => e
+        self.asari_on_error(e)
+      end
+
+      def asari_add_items(objects)
+        amazon_items = []
+        objects.each do |object|
+          if self.asari_when and asari_should_index?(object)
+            data = self.asari_data_item object
+            amazon_items << self.asari_instance.create_item(object.id, data)
+          elsif !self.asari_when
+            data = self.asari_data_item object
+            amazon_items << self.asari_instance.create_item(object.id, data)
+          end
+        end      
+        self.asari_instance.doc_request(amazon_items) if amazon_items.size > 0
       rescue Asari::DocumentUpdateException => e
         self.asari_on_error(e)
       end

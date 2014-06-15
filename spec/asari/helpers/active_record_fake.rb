@@ -25,17 +25,13 @@ class ActiveRecordFake
   include Asari::ActiveRecord
 
   asari_index("test-domain", [:name, :email])
+  attr_accessor :id, :name, :email
 
-  def id
-    1
+  def initialize(params = {}) 
+    @id = params[:id] || 1
+    @name = params[:name] || "Fritters"
+    @email = params[:email] || "fritters@aredelicious.com"
   end
 
-  def name
-    "Fritters"
-  end
-
-  def email
-    "fritters@aredelicious.com"
-  end
 end
 

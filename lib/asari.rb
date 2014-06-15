@@ -72,20 +72,21 @@ class Asari
 
     url = "http://search-#{search_domain}.#{aws_region}.cloudsearch.amazonaws.com/#{api_version}/search"
 
-    if api_version == '2011-02-01'
-      url += "?q=#{CGI.escape(term.to_s)}"
-      url += "&bq=#{CGI.escape(bq)}" if options[:filter]
-    else
+    if api_version == '2013-01-01'
       if options[:filter]
         url += "?q=#{CGI.escape(bq)}"
         url += "&q.parser=structured"
       else
         url += "?q=#{CGI.escape(term.to_s)}"
       end
+    else
+      url += "?q=#{CGI.escape(term.to_s)}"
+      url += "&bq=#{CGI.escape(bq)}" if options[:filter]
     end
 
+    return_statement = api_version == '2013-01-01' ? 'return' : 'return-fields'
     url += "&size=#{page_size}"
-    url += "&return-fields=#{options[:return_fields].join ','}" if options[:return_fields]
+    url += "&#{return_statement}=#{options[:return_fields].join ','}" if options[:return_fields]
 
     if options[:page]
       start = (options[:page].to_i - 1) * page_size
@@ -94,7 +95,8 @@ class Asari
 
     if options[:rank]
       rank = normalize_rank(options[:rank])
-      url << "&rank=#{rank}"
+      rank_or_sort = api_version == '2013-01-01' ? 'sort' : 'rank'
+      url << "&#{rank_or_sort}=#{CGI.escape(rank)}"
     end
 
     begin
@@ -235,7 +237,12 @@ class Asari
   def normalize_rank(rank)
     rank = Array(rank)
     rank << :asc if rank.size < 2
-    rank[1] == :desc ? "-#{rank[0]}" : rank[0]
+    
+    if api_version == '2013-01-01'
+      "#{rank[0]} #{rank[1]}"
+    else
+      rank[1] == :desc ? "-#{rank[0]}" : rank[0]
+    end
   end
 
   def convert_date_or_time(obj)

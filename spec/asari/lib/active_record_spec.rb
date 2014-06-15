@@ -60,6 +60,57 @@ describe Asari do
         end
       end
 
+      describe 'adding multiple indexes at once' do
+        let(:record_1) {ActiveRecordFake.new}
+        let(:record_2) {ActiveRecordFake.new id: 2, name: 'Honey Badger', email: 'honey@badger.com'}
+
+        context 'calling out to cloud search' do
+          before :each do
+            @asari = Asari.new 'honeybadger-testdomain'
+            @asari.should_receive(:api_version).and_return '2013-01-01'
+            ActiveRecordFake.class_variable_set(:@@asari_instance, @asari)
+            Time.should_receive(:now).at_least(:once).and_return(1)
+            ActiveRecordFake.should_receive(:asari_when).at_least(:once).and_return true
+            stub_const("HTTParty", double())
+          end
+
+          it 'will add multiple records' do
+            HTTParty.stub(:post).and_return(fake_post_success)
+            ActiveRecordFake.should_receive(:asari_should_index?).at_least(:once).and_return true
+            HTTParty.should_receive(:post).with("http://doc-honeybadger-testdomain.us-east-1.cloudsearch.amazonaws.com/2013-01-01/documents/batch", {:body=>"[{\"type\":\"add\",\"id\":\"1\",\"version\":1,\"lang\":\"en\",\"fields\":{\"name\":\"Fritters\",\"email\":\"fritters@aredelicious.com\"}},{\"type\":\"add\",\"id\":\"2\",\"version\":1,\"lang\":\"en\",\"fields\":{\"name\":\"Honey Badger\",\"email\":\"honey@badger.com\"}}]", :headers=>{"Content-Type"=>"application/json"}})
+            ActiveRecordFake.asari_add_items([record_1, record_2]).should eql nil 
+          end
+
+          it 'will not add records that are not indexable' do
+            HTTParty.stub(:post).and_return(fake_post_success)
+            ActiveRecordFake.should_receive(:asari_should_index?).with(record_1).and_return true
+            ActiveRecordFake.should_receive(:asari_should_index?).with(record_2).and_return false
+
+            HTTParty.should_receive(:post).with("http://doc-honeybadger-testdomain.us-east-1.cloudsearch.amazonaws.com/2013-01-01/documents/batch", {:body=>"[{\"type\":\"add\",\"id\":\"1\",\"version\":1,\"lang\":\"en\",\"fields\":{\"name\":\"Fritters\",\"email\":\"fritters@aredelicious.com\"}}]", :headers=>{"Content-Type"=>"application/json"}})
+            ActiveRecordFake.asari_add_items([record_1, record_2]).should eql nil 
+          end
+
+
+          it 'will not add multiple records if there is an error' do
+            HTTParty.stub(:post).and_return(fake_error_response)
+            ActiveRecordFake.should_receive(:asari_should_index?).at_least(:once).and_return true
+
+            HTTParty.should_receive(:post).with("http://doc-honeybadger-testdomain.us-east-1.cloudsearch.amazonaws.com/2013-01-01/documents/batch", {:body=>"[{\"type\":\"add\",\"id\":\"1\",\"version\":1,\"lang\":\"en\",\"fields\":{\"name\":\"Fritters\",\"email\":\"fritters@aredelicious.com\"}},{\"type\":\"add\",\"id\":\"2\",\"version\":1,\"lang\":\"en\",\"fields\":{\"name\":\"Honey Badger\",\"email\":\"honey@badger.com\"}}]", :headers=>{"Content-Type"=>"application/json"}})
+            expect{ActiveRecordFake.asari_add_items([record_1, record_2])}.to raise_error(Asari::DocumentUpdateException) 
+          end
+        end
+
+        it 'will not make a call to cloud search if there are not indexable documents' do
+          HTTParty.stub(:post).and_return(fake_post_success)
+          ActiveRecordFake.should_receive(:asari_when).at_least(:once).and_return true
+          ActiveRecordFake.should_receive(:asari_should_index?).with(record_1).and_return false
+          ActiveRecordFake.should_receive(:asari_should_index?).with(record_2).and_return false
+
+          HTTParty.should_receive(:post).never
+          ActiveRecordFake.asari_add_items([record_1, record_2]).should eql nil 
+        end
+      end
+
       describe "with automatic indexing turned off" do
 
         before :each do

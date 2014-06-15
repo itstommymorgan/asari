@@ -8,36 +8,120 @@ describe Asari do
   end
 
   describe "searching" do
-    context "when region is not specified" do
-      it "allows you to search using default region." do
-        HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=testsearch&size=10")
-        @asari.search("testsearch")
+    shared_examples_for 'code that does basic searches' do
+      before(:each) {ENV['CLOUDSEARCH_API_VERSION'] = api_version}
+      after(:each) {ENV['CLOUDSEARCH_API_VERSION'] = '2011-02-01'}
+      context "when region is not specified" do
+        it "allows you to search using default region." do
+          HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/#{api_version}/search?q=testsearch&size=10")
+          @asari.search("testsearch")
+        end
+      end
+
+      context "when region is not specified" do
+        before(:each) do
+          @asari.aws_region = 'my-region'
+        end
+        it "allows you to search using specified region." do
+          HTTParty.should_receive(:get).with("http://search-testdomain.my-region.cloudsearch.amazonaws.com/#{api_version}/search?q=testsearch&size=10")
+          @asari.search("testsearch")
+        end
+      end
+
+      it "escapes dangerous characters in search terms." do
+        HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/#{api_version}/search?q=testsearch%21&size=10")
+        @asari.search("testsearch!")
+      end
+
+      it "honors the page_size option" do
+        HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/#{api_version}/search?q=testsearch&size=20")
+        @asari.search("testsearch", :page_size => 20)
+      end
+
+      it "honors the page option" do
+        HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/#{api_version}/search?q=testsearch&size=20&start=40")
+        @asari.search("testsearch", :page_size => 20, :page => 3)
+      end
+
+    end
+
+    context 'the 2011-02-01 api' do
+      let(:api_version) {'2011-02-01'}
+      it_behaves_like 'code that does basic searches'
+
+      describe "boolean searching" do
+        it "builds a query string from a passed hash" do
+          HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=&bq=%28and+foo%3A%27bar%27+baz%3A%27bug%27%29&size=10")
+          @asari.search(filter: { and: { foo: "bar", baz: "bug" }})
+        end
+
+        it "honors the logic types" do
+          HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=&bq=%28or+foo%3A%27bar%27+baz%3A%27bug%27%29&size=10")
+          @asari.search(filter: { or: { foo: "bar", baz: "bug" }})
+        end
+
+        it "supports nested logic" do
+          HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=&bq=%28or+is_donut%3A%27true%27%28and+round%3A%27true%27+frosting%3A%27true%27+fried%3A%27true%27%29%29&size=10")
+          @asari.search(filter: { or: { is_donut: true, and:
+                                        { round: true, frosting: true, fried: true }}
+          })
+        end
+
+        it "fails gracefully with empty params" do
+          HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=&bq=%28or+is_donut%3A%27true%27%29&size=10")
+          @asari.search(filter: { or: { is_donut: true, and:
+                                        { round: "", frosting: nil, fried: nil }}
+          })
+        end
+
+        it "supports full text search and boolean searching" do
+          HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=nom&bq=%28or+is_donut%3A%27true%27%28and+fried%3A%27true%27%29%29&size=10")
+          @asari.search("nom", filter: { or: { is_donut: true, and:
+                                               { round: "", frosting: nil, fried: true }}
+          })
+        end
       end
     end
 
-    context "when region is not specified" do
-      before(:each) do
-        @asari.aws_region = 'my-region'
+    context 'the 2013-01-01 api' do
+      let(:api_version) {'2013-01-01'}
+      it_behaves_like 'code that does basic searches'
+
+      describe 'boolean searching,  structured queries' do
+        before(:each) {ENV['CLOUDSEARCH_API_VERSION'] = api_version}
+        after(:each) {ENV['CLOUDSEARCH_API_VERSION'] = '2011-02-01'}
+
+        it "builds a query string from a passed hash" do
+          HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2013-01-01/search?q=%28and+foo%3A%27bar%27+baz%3A%27bug%27%29&q.parser=structured&size=10")
+          @asari.search(filter: { and: { foo: "bar", baz: "bug" }})
+        end
+
+        it "honors the logic types" do
+          HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2013-01-01/search?q=%28or+foo%3A%27bar%27+baz%3A%27bug%27%29&q.parser=structured&size=10")
+          @asari.search(filter: { or: { foo: "bar", baz: "bug" }})
+        end
+
+        it "supports nested logic" do
+          HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2013-01-01/search?q=%28or+is_donut%3A%27true%27%28and+round%3A%27true%27+frosting%3A%27true%27+fried%3A%27true%27%29%29&q.parser=structured&size=10")
+          @asari.search(filter: { or: { is_donut: true, and:
+                                        { round: true, frosting: true, fried: true }}
+          })
+        end
+
+        it "fails gracefully with empty params" do
+          HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2013-01-01/search?q=%28or+is_donut%3A%27true%27%29&q.parser=structured&size=10")
+          @asari.search(filter: { or: { is_donut: true, and:
+                                        { round: "", frosting: nil, fried: nil }}
+          })
+        end
+
+        it "ignores full text search when filter option is used" do
+          HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2013-01-01/search?q=%28or+is_donut%3A%27true%27%28and+fried%3A%27true%27%29%29&q.parser=structured&size=10")
+          @asari.search("nom", filter: { or: { is_donut: true, and:
+                                               { round: "", frosting: nil, fried: true }}
+          })
+        end
       end
-      it "allows you to search using specified region." do
-        HTTParty.should_receive(:get).with("http://search-testdomain.my-region.cloudsearch.amazonaws.com/2011-02-01/search?q=testsearch&size=10")
-        @asari.search("testsearch")
-      end
-    end
-
-    it "escapes dangerous characters in search terms." do
-      HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=testsearch%21&size=10")
-      @asari.search("testsearch!")
-    end
-
-    it "honors the page_size option" do
-      HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=testsearch&size=20")
-      @asari.search("testsearch", :page_size => 20)
-    end
-
-    it "honors the page option" do
-      HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=testsearch&size=20&start=40")
-      @asari.search("testsearch", :page_size => 20, :page => 3)
     end
 
     describe "the rank option" do
@@ -83,13 +167,13 @@ describe Asari do
         "found" => 2,
         "start" => 0,
         "hit" => [{"id" => "123",
-          "data" => {"name" => "Beavis", "address" => "arizona"}},
-          {"id" => "456",
-            "data" => {"name" => "Honey Badger", "address" => "africa"}}]}},
-            :response => OpenStruct.new(:code => "200"))
+                   "data" => {"name" => "Beavis", "address" => "arizona"}},
+        {"id" => "456",
+         "data" => {"name" => "Honey Badger", "address" => "africa"}}]}},
+      :response => OpenStruct.new(:code => "200"))
       }
       let(:return_struct) {{"123" => {"name" => "Beavis", "address" => "arizona"},
-                           "456" => {"name" => "Honey Badger", "address" => "africa"}}}
+                            "456" => {"name" => "Honey Badger", "address" => "africa"}}}
 
       before :each do
         HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=testsearch&size=10&return-fields=name,address").and_return response_with_field_data
@@ -111,38 +195,6 @@ describe Asari do
 
   end
 
-  describe "boolean searching" do
-    it "builds a query string from a passed hash" do
-      HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=&bq=%28and+foo%3A%27bar%27+baz%3A%27bug%27%29&size=10")
-      @asari.search(filter: { and: { foo: "bar", baz: "bug" }})
-    end
-
-    it "honors the logic types" do
-      HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=&bq=%28or+foo%3A%27bar%27+baz%3A%27bug%27%29&size=10")
-      @asari.search(filter: { or: { foo: "bar", baz: "bug" }})
-    end
-
-    it "supports nested logic" do
-      HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=&bq=%28or+is_donut%3A%27true%27%28and+round%3A%27true%27+frosting%3A%27true%27+fried%3A%27true%27%29%29&size=10")
-      @asari.search(filter: { or: { is_donut: true, and:
-                            { round: true, frosting: true, fried: true }}
-      })
-    end
-
-    it "fails gracefully with empty params" do
-      HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=&bq=%28or+is_donut%3A%27true%27%29&size=10")
-      @asari.search(filter: { or: { is_donut: true, and:
-                            { round: "", frosting: nil, fried: nil }}
-      })
-    end
-
-    it "supports full text search and boolean searching" do
-      HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=nom&bq=%28or+is_donut%3A%27true%27%28and+fried%3A%27true%27%29%29&size=10")
-      @asari.search("nom", filter: { or: { is_donut: true, and:
-                                   { round: "", frosting: nil, fried: true }}
-      })
-    end
-  end
 
   describe "geography searching" do
     it "builds a proper query string" do

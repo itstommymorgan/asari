@@ -15,6 +15,10 @@ Note:  This version is currently under heavy development.  If you want a stable 
 
 ## Usage
 
+#### API Version
+
+Asari defaults to using the 2011-02-01 version of the API.  If you want to use the 2013-01-01 version set the CLOUDSEARCH_API_VERSION environment variable.
+
 #### Your Search Domain
 
 Amazon Cloud Search will give you a Search Endpoint and Document Endpoint.  When specifying your search domain in Asari omit the search- for your search domain.  For example if your search endpoint is "search-beavis-er432w3er.us-east-1.cloudsearch.amazonaws.com" the search domain you use in Asari would be "beavis-er432w3er".  Your region is the second item.  In this example it would be "us-east-1".
@@ -29,13 +33,14 @@ Amazon Cloud Search will give you a Search Endpoint and Document Endpoint.  When
     asari.search("tommy", :rank => "-name") # Another way to sort the search descending
 
 
-#### Boolean Query Usage
+#### Boolean/Structured Compound Query Usage
 
     asari.search(filter: { and: { title: "donut", type: "cruller" }})
-    asari.search("boston creme", filter: { and: { title: "donut", or: { type: "cruller|twist" }}}) # Full text search and nested boolean logic
+    asari.search("boston creme", filter: { and: { title: "donut", or: { type: "cruller|twist" }}}) # Full text search and nested boolean logic 2011-02-01 API only
 
-For more information on how to use Cloudsearch boolean queries, [see the
+For more information on how to use Cloudsearch boolean queries (2011-02-01), [see the
 documentation.](http://docs.aws.amazon.com/cloudsearch/latest/developerguide/booleansearch.html)
+For more information on how to use Cloudsearch structured compound queries (2013-01-01), [see the documentation.](http://docs.aws.amazon.com/cloudsearch/latest/developerguide/searching-compound-queries.html)
 
 ### Geospatial Query Usage
 
@@ -183,6 +188,12 @@ While having asari auto index,  delete and update records can be handy,  it does
 
 You can then manually trigger deletes,  adds and updates by calling asari_remove_from_index,  asari_add_to_index and asari_update_in_index on your model.
 
+We also have support for batching updates by calling asari_add_items on a ActiveModel(ActiveRecord)based object.  
+
+    user1 = User.create
+    user2 = User.create
+    User.asari_add_items user1, user2, user3
+
 #### AWS Region
 
 By default, Asari assumes that you're operating in us-east-1, which is probably
@@ -205,7 +216,7 @@ ActiveRecord model:
 
 ## ActiveAsari
 
-Full Active Record Integration with Asari along with migration-like indexing and domain creation.  This makes using Amazon Cloud Search a lot easier in your rails application.
+Full Active Record Integration with Asari along with migration-like indexing.  This makes using Amazon Cloud Search a lot easier in your rails application.
 
 #### Configuration
 
@@ -220,18 +231,12 @@ In your application.rb file or in the main part of your rack app.  NOTE:  The Ac
     ACTIVE_ASARI_CONFIG, ACTIVE_ASARI_ENV = ActiveAsari.configure(File.dirname(__FILE__))
     require 'active_asari/active_record'
   
-There are two configuration files that active_asari looks for.  First,  active_asari_env.yml.  Right now this file is used to configure access permissions for your domains and the prefix to use for them.  Prefixing was added so that you can have domains for multiple environments under one amazon account without having them stomp on each other.  Here is an example of a active_asari_env.yml file.
+There are two configuration files that active_asari looks for.  First,  active_asari_env.yml.  Right now this file is used to configure the prefix to use for your domains.  Prefixing was added so that you can have domains for multiple environments under one amazon account without having them stomp on each other.  Here is an example of a active_asari_env.yml file.
 
     development:
       domain_prefix: dev
-      access_permissions:
-      - ip_address: 0.0.0.0/0  
-      - ip_address: 25.44.23.25/32
     staging:
       domain_prefix: staging
-      access_permissions:
-      - ip_address: 192.168.66.23/32  
-      - ip_address: 28.44.23.25/32
 
 When you are in a test environment active_asari overlays are disabled.  Right now the recommended way of testing asari calls is via mocking.
 

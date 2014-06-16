@@ -40,7 +40,7 @@ module ActiveAsari
                                                                                                :index_field_type => index_field_type}}
 
       field[index_field_name].delete 'index_field_type'
-      request[:index_field]["#{index_field_type}_options".to_sym] = field[index_field_name].symbolize_keys!
+      request[:index_field]["#{index_field_type.tr('-', '_')}_options".to_sym] = field[index_field_name].symbolize_keys! if !field[index_field_name].empty?
 
       connection.define_index_field request
     end

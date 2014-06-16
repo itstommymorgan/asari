@@ -36,7 +36,7 @@ describe 'migrations' do
       shared_examples_for 'code that adds to and indexes the domain' do    
         it 'should add a index to the domain with options' do
           expected_index_field_request = {domain_name: 'test-beavis', index_field: 
-                                          {index_field_name: 'tv_location', index_field_type: index_type, "#{index_type}_options".to_sym =>
+                                          {index_field_name: 'tv_location', index_field_type: index_type, "#{index_type}_options".tr('-','_').to_sym =>
                                            {return_enabled: true}}}
           migrations.connection.should_receive(:define_index_field).with(expected_index_field_request).and_return CREATE_TEXT_INDEX_RESPONSE 
           migrations.create_index_field('beavis', 'tv_location' => { 'index_field_type' => index_type, 'return_enabled' => true})
@@ -44,8 +44,7 @@ describe 'migrations' do
 
         it 'should add a index to the domain with default options' do
           expected_index_field_request = {domain_name: 'test-beavis', index_field: 
-                                          {index_field_name: 'tv_location', index_field_type: index_type, "#{index_type}_options".to_sym =>
-                                           {}}}
+                                          {index_field_name: 'tv_location', index_field_type: index_type}}
           migrations.connection.should_receive(:define_index_field).with(expected_index_field_request).and_return CREATE_TEXT_INDEX_RESPONSE 
           migrations.create_index_field('beavis', 'tv_location' => { 'index_field_type' => index_type})
         end

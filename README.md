@@ -1,5 +1,11 @@
 # Asari 1.0-Pre
 
+## Note on 2013-01-01 Amazon API support
+
+We are actively working on a 1.0 version with support for the latest api along with complete Active Asari support.  It should be solid enough to use in production via
+  
+    gem "authlogic", :git => "git@github.com:wellbredgrapefruit/asari.git", :branch => "1.0"
+
 ## Description
 
 [![Build Status](https://travis-ci.org/lgleasain/asari.svg?branch=master)](https://travis-ci.org/lgleasain/asari)

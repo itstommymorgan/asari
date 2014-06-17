@@ -4,7 +4,7 @@
 
 We are actively working on a 1.0 version with support for the latest api along with complete Active Asari support.  It should be solid enough to use in production via
   
-    gem "authlogic", :git => "git@github.com:wellbredgrapefruit/asari.git", :branch => "1.0"
+    gem "asari", :git => "git@github.com:wellbredgrapefruit/asari.git", :branch => "1.0"
 
 ## Description
 

@@ -102,13 +102,23 @@ class Asari
         objects.each do |object|
           if self.asari_when and asari_should_index?(object)
             data = self.asari_data_item object
-            amazon_items << self.asari_instance.create_item(object.id, data)
+            amazon_items << self.asari_instance.create_item_query(object.id, data)
           elsif !self.asari_when
             data = self.asari_data_item object
-            amazon_items << self.asari_instance.create_item(object.id, data)
+            amazon_items << self.asari_instance.create_item_query(object.id, data)
           end
         end      
         self.asari_instance.doc_request(amazon_items) if amazon_items.size > 0
+      rescue Asari::DocumentUpdateException => e
+        self.asari_on_error(e)
+      end
+
+      def asari_remove_items(ids)
+        amazon_items = []
+        ids.each do |id|
+          amazon_items << self.asari_instance.remove_item_query(id)
+        end   
+        self.asari_instance.doc_request(amazon_items)
       rescue Asari::DocumentUpdateException => e
         self.asari_on_error(e)
       end

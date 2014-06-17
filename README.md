@@ -194,11 +194,15 @@ While having asari auto index,  delete and update records can be handy,  it does
 
 You can then manually trigger deletes,  adds and updates by calling asari_remove_from_index,  asari_add_to_index and asari_update_in_index on your model.
 
-We also have support for batching updates by calling asari_add_items on a ActiveModel(ActiveRecord)based object.  
+We also have support for batching updates by calling asari_add_items on a asari model object.  
 
     user1 = User.create
     user2 = User.create
-    User.asari_add_items user1, user2, user3
+    User.asari_add_items [user1, user2, user3]
+
+A batch delete_items can be accomplished via asari_remove_item on a asari model object
+
+    User.asari_remove_items [1, 2, 8]
 
 #### AWS Region
 

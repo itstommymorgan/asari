@@ -40,7 +40,7 @@ class Asari
   # CloudSearch API).
   #
   def api_version
-    @api_version || ENV['CLOUDSEARCH_API_VERSION'] || "2011-02-01" 
+    @api_version || ENV['CLOUDSEARCH_API_VERSION'] || "2011-02-01"
   end
 
   # Public: returns the current aws_region, or the sensible default of
@@ -70,7 +70,7 @@ class Asari
     bq = boolean_query(options[:filter]) if options[:filter]
     page_size = options[:page_size].nil? ? 10 : options[:page_size].to_i
 
-    url = "http://search-#{search_domain}.#{aws_region}.cloudsearch.amazonaws.com/#{api_version}/search"
+    url = "https://search-#{search_domain}.#{aws_region}.cloudsearch.amazonaws.com/#{api_version}/search"
 
     if api_version == '2013-01-01'
       if options[:filter]
@@ -178,7 +178,7 @@ class Asari
   #
   def doc_request(query)
     request_query = query.class.name == 'Array' ? query : [query]
-    endpoint = "http://doc-#{search_domain}.#{aws_region}.cloudsearch.amazonaws.com/#{api_version}/documents/batch"
+    endpoint = "https://doc-#{search_domain}.#{aws_region}.cloudsearch.amazonaws.com/#{api_version}/documents/batch"
 
     options = { :body => request_query.to_json, :headers => { "Content-Type" => "application/json"} }
 
@@ -241,7 +241,7 @@ class Asari
   def normalize_rank(rank)
     rank = Array(rank)
     rank << :asc if rank.size < 2
-    
+
     if api_version == '2013-01-01'
       "#{rank[0]} #{rank[1]}"
     else

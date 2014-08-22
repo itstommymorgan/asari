@@ -74,14 +74,14 @@ describe Asari do
 
           it 'will delete multiple records' do
             HTTParty.stub(:post).and_return(fake_post_success)
-            HTTParty.should_receive(:post).with("http://doc-honeybadger-testdomain.us-east-1.cloudsearch.amazonaws.com/2013-01-01/documents/batch", {:body=>"[{\"type\":\"delete\",\"id\":\"12\",\"version\":1},{\"type\":\"delete\",\"id\":\"16a\",\"version\":1}]", :headers=>{"Content-Type"=>"application/json"}})
-            ActiveRecordFake.asari_remove_items(['12', '16a']).should eql nil 
+            HTTParty.should_receive(:post).with("https://doc-honeybadger-testdomain.us-east-1.cloudsearch.amazonaws.com/2013-01-01/documents/batch", {:body=>"[{\"type\":\"delete\",\"id\":\"12\",\"version\":1},{\"type\":\"delete\",\"id\":\"16a\",\"version\":1}]", :headers=>{"Content-Type"=>"application/json"}})
+            ActiveRecordFake.asari_remove_items(['12', '16a']).should eql nil
           end
 
           it 'will not delete multiple records if there is an error' do
             HTTParty.stub(:post).and_return(fake_error_response)
-            HTTParty.should_receive(:post).with("http://doc-honeybadger-testdomain.us-east-1.cloudsearch.amazonaws.com/2013-01-01/documents/batch", {:body=>"[{\"type\":\"delete\",\"id\":\"12\",\"version\":1},{\"type\":\"delete\",\"id\":\"16a\",\"version\":1}]", :headers=>{"Content-Type"=>"application/json"}})
-            expect{ActiveRecordFake.asari_remove_items(['12', '16a'])}.to raise_error(Asari::DocumentUpdateException) 
+            HTTParty.should_receive(:post).with("https://doc-honeybadger-testdomain.us-east-1.cloudsearch.amazonaws.com/2013-01-01/documents/batch", {:body=>"[{\"type\":\"delete\",\"id\":\"12\",\"version\":1},{\"type\":\"delete\",\"id\":\"16a\",\"version\":1}]", :headers=>{"Content-Type"=>"application/json"}})
+            expect{ActiveRecordFake.asari_remove_items(['12', '16a'])}.to raise_error(Asari::DocumentUpdateException)
           end
         end
 
@@ -99,8 +99,8 @@ describe Asari do
             it 'will add multiple records' do
               HTTParty.stub(:post).and_return(fake_post_success)
               ActiveRecordFake.should_receive(:asari_should_index?).at_least(:once).and_return true
-              HTTParty.should_receive(:post).with("http://doc-honeybadger-testdomain.us-east-1.cloudsearch.amazonaws.com/2013-01-01/documents/batch", {:body=>"[{\"type\":\"add\",\"id\":\"1\",\"version\":1,\"lang\":\"en\",\"fields\":{\"name\":\"Fritters\",\"email\":\"fritters@aredelicious.com\"}},{\"type\":\"add\",\"id\":\"2\",\"version\":1,\"lang\":\"en\",\"fields\":{\"name\":\"Honey Badger\",\"email\":\"honey@badger.com\"}}]", :headers=>{"Content-Type"=>"application/json"}})
-              ActiveRecordFake.asari_add_items([record_1, record_2]).should eql nil 
+              HTTParty.should_receive(:post).with("https://doc-honeybadger-testdomain.us-east-1.cloudsearch.amazonaws.com/2013-01-01/documents/batch", {:body=>"[{\"type\":\"add\",\"id\":\"1\",\"version\":1,\"lang\":\"en\",\"fields\":{\"name\":\"Fritters\",\"email\":\"fritters@aredelicious.com\"}},{\"type\":\"add\",\"id\":\"2\",\"version\":1,\"lang\":\"en\",\"fields\":{\"name\":\"Honey Badger\",\"email\":\"honey@badger.com\"}}]", :headers=>{"Content-Type"=>"application/json"}})
+              ActiveRecordFake.asari_add_items([record_1, record_2]).should eql nil
             end
 
             it 'will not add records that are not indexable' do
@@ -108,8 +108,8 @@ describe Asari do
               ActiveRecordFake.should_receive(:asari_should_index?).with(record_1).and_return true
               ActiveRecordFake.should_receive(:asari_should_index?).with(record_2).and_return false
 
-              HTTParty.should_receive(:post).with("http://doc-honeybadger-testdomain.us-east-1.cloudsearch.amazonaws.com/2013-01-01/documents/batch", {:body=>"[{\"type\":\"add\",\"id\":\"1\",\"version\":1,\"lang\":\"en\",\"fields\":{\"name\":\"Fritters\",\"email\":\"fritters@aredelicious.com\"}}]", :headers=>{"Content-Type"=>"application/json"}})
-              ActiveRecordFake.asari_add_items([record_1, record_2]).should eql nil 
+              HTTParty.should_receive(:post).with("https://doc-honeybadger-testdomain.us-east-1.cloudsearch.amazonaws.com/2013-01-01/documents/batch", {:body=>"[{\"type\":\"add\",\"id\":\"1\",\"version\":1,\"lang\":\"en\",\"fields\":{\"name\":\"Fritters\",\"email\":\"fritters@aredelicious.com\"}}]", :headers=>{"Content-Type"=>"application/json"}})
+              ActiveRecordFake.asari_add_items([record_1, record_2]).should eql nil
             end
 
 
@@ -117,8 +117,8 @@ describe Asari do
               HTTParty.stub(:post).and_return(fake_error_response)
               ActiveRecordFake.should_receive(:asari_should_index?).at_least(:once).and_return true
 
-              HTTParty.should_receive(:post).with("http://doc-honeybadger-testdomain.us-east-1.cloudsearch.amazonaws.com/2013-01-01/documents/batch", {:body=>"[{\"type\":\"add\",\"id\":\"1\",\"version\":1,\"lang\":\"en\",\"fields\":{\"name\":\"Fritters\",\"email\":\"fritters@aredelicious.com\"}},{\"type\":\"add\",\"id\":\"2\",\"version\":1,\"lang\":\"en\",\"fields\":{\"name\":\"Honey Badger\",\"email\":\"honey@badger.com\"}}]", :headers=>{"Content-Type"=>"application/json"}})
-              expect{ActiveRecordFake.asari_add_items([record_1, record_2])}.to raise_error(Asari::DocumentUpdateException) 
+              HTTParty.should_receive(:post).with("https://doc-honeybadger-testdomain.us-east-1.cloudsearch.amazonaws.com/2013-01-01/documents/batch", {:body=>"[{\"type\":\"add\",\"id\":\"1\",\"version\":1,\"lang\":\"en\",\"fields\":{\"name\":\"Fritters\",\"email\":\"fritters@aredelicious.com\"}},{\"type\":\"add\",\"id\":\"2\",\"version\":1,\"lang\":\"en\",\"fields\":{\"name\":\"Honey Badger\",\"email\":\"honey@badger.com\"}}]", :headers=>{"Content-Type"=>"application/json"}})
+              expect{ActiveRecordFake.asari_add_items([record_1, record_2])}.to raise_error(Asari::DocumentUpdateException)
             end
           end
 
@@ -129,7 +129,7 @@ describe Asari do
             ActiveRecordFake.should_receive(:asari_should_index?).with(record_2).and_return false
 
             HTTParty.should_receive(:post).never
-            ActiveRecordFake.asari_add_items([record_1, record_2]).should eql nil 
+            ActiveRecordFake.asari_add_items([record_1, record_2]).should eql nil
           end
         end
       end
@@ -164,15 +164,15 @@ describe Asari do
       end
 
       it "will raise the Asari exception by default when adding to the index." do
-        expect { ActiveRecordFake.new.asari_add_to_index }.to raise_error(Asari::DocumentUpdateException)        
+        expect { ActiveRecordFake.new.asari_add_to_index }.to raise_error(Asari::DocumentUpdateException)
       end
 
       it "will raise the Asari exception by default when updating the index." do
-        expect { ActiveRecordFake.new.asari_update_in_index }.to raise_error(Asari::DocumentUpdateException)        
+        expect { ActiveRecordFake.new.asari_update_in_index }.to raise_error(Asari::DocumentUpdateException)
       end
 
       it "will raise the Asari exception by default when removing from index." do
-        expect { ActiveRecordFake.new.asari_remove_from_index }.to raise_error(Asari::DocumentUpdateException)        
+        expect { ActiveRecordFake.new.asari_remove_from_index }.to raise_error(Asari::DocumentUpdateException)
       end
 
       it "will always raise the Asari exception when searching in the index." do

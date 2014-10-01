@@ -144,7 +144,9 @@ class Asari
       def asari_data_item(obj)
         data = {}
         self.asari_fields.each do |field|
-          data[field] = obj.send(field) || ""
+          value = obj.send( field)
+          next if value.nil?   # skip fields that are nil, so that the AWS Cloudsearch default value will kick in
+          data[field] = value
         end
         data
       end

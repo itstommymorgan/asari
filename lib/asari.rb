@@ -65,20 +65,42 @@ class Asari
   #   the server.
   def search(term, options = {})
     return Asari::Collection.sandbox_fake if self.class.mode == :sandbox
-    term,options = "",term if term.is_a?(Hash) and options.empty?
+    if term.is_a?(Hash) and options.empty?
+      term,options = '',term 
+    elsif term.nil?
+      term = ''
+    end
 
     bq = boolean_query(options[:filter]) if options[:filter]
+    gq = geo_query(options[:geo]) if options[:geo]
     page_size = options[:page_size].nil? ? 10 : options[:page_size].to_i
 
     url = "http://search-#{search_domain}.#{aws_region}.cloudsearch.amazonaws.com/#{api_version}/search"
 
     if api_version == '2013-01-01'
-      if options[:filter]
+      if !bq.nil? && !bq.empty?
+        # structured boolean query -- may be augmented by geo query later
+        if !term.empty?
+          # include text query
+          bq = "(and '#{term.to_s}' #{bq})"
+        elsif options[:filter].count > 1
+          # implicit AND at the top level, when there is more than one term
+          bq = "(and #{bq})"
+        end
         url += "?q=#{CGI.escape(bq)}"
+        url += "&q.parser=structured"
+      elsif !gq.nil? && !gq.empty? && term.empty?
+        # geo query will sort relative to latlon, or select latlon tagged docs within a radius, but we need a set of docs to sort or filter, and there is no boolean query.   so, if no term either, then :matchall
+        url += "?q=matchall"
         url += "&q.parser=structured"
       else
         url += "?q=#{CGI.escape(term.to_s)}"
       end
+      gq.each do |arg,value|
+        # aws does not like if if you repeat q.parser=structured, for example
+        next if url.include?( "#{arg}=")
+        url += "&#{arg}=#{CGI.escape(value)}"
+      end unless gq.nil?
     else
       url += "?q=#{CGI.escape(term.to_s)}"
       url += "&bq=#{CGI.escape(bq)}" if options[:filter]
@@ -202,7 +224,8 @@ class Asari
     query = { "type" => "add", "id" => id.to_s, "version" => Time.now.to_i, "lang" => "en" }
     fields.each do |k,v|
       fields[k] = convert_date_or_time(fields[k])
-      fields[k] = "" if v.nil?
+      # skip fields that do not have a specified value, so that the AWS Cloudsearch default value will kick in
+      fields.delete( k) if fields[k].nil?
     end
 
     query["fields"] = fields
@@ -215,28 +238,193 @@ class Asari
 
   protected
 
-  # Private: Builds the query from a passed hash
+  def convert_date_or_time(obj)
+    return obj unless [Time, Date, DateTime].include?(obj.class)
+    obj.to_time.to_i
+  end
+
+  # Private: Builds the boolean query from a passed hash
   #
   #     terms - a hash of the search query. %w(and or not) are reserved hash keys
   #             that build the logic of the query
-  def boolean_query(terms = {}, options = {})
+  def boolean_query(terms = {})
     reduce = lambda { |hash|
       hash.reduce("") do |memo, (key, value)|
         if %w(and or not).include?(key.to_s) && value.is_a?(Hash)
           sub_query = reduce.call(value)
-          memo += "(#{key}#{sub_query})" unless sub_query.empty?
+          memo += " (#{key}#{sub_query})" unless sub_query.empty?
         else
-          if value.is_a?(Range) || value.is_a?(Integer)
-            memo += " #{key}:#{value}"
-          else
-            memo += " #{key}:'#{value}'" unless value.to_s.empty?
-          end
+          sub_query = normalize_sub_query(key,value)
+          memo += " #{sub_query}" unless sub_query.nil?
         end
         memo
       end
     }
     reduce.call(terms)
   end
+
+  def normalize_sub_query(key,value)
+    if value.is_a?(Array)
+      case value.count
+      when 0
+        return nil
+      when 1
+        return normalize_sub_query( key, value.first)
+      else
+        # implicit OR of several values
+        sub_queries = value.reduce('') do |memo,v|
+          sub_query = normalize_sub_query( key, v)
+          memo += " #{sub_query}" unless sub_query.nil?
+          memo
+        end
+        return sub_queries.empty? ? nil : "(or #{sub_queries})"
+      end
+    elsif value.is_a?(Range)
+      return normalize_range_query(key,value)
+    elsif value.is_a?(Integer)
+      return normalize_integer_query(key,value)
+    else
+      return value.to_s.empty? ? nil : normalize_term_query(key,value)
+    end
+  end
+
+  def normalize_integer_query(field,value)
+    if api_version == '2013-01-01'
+      "(term field=#{field} #{value})"
+    else
+      "#{field}:#{value}"
+    end
+  end
+
+  def normalize_term_query(field,value)
+    if api_version == '2013-01-01'
+      "(term field=#{field} '#{value}')"
+    else
+      "#{field}:#{value}"
+    end
+  end
+
+  def normalize_range_query(field,range)
+    if api_version == '2013-01-01'
+      "(range field=#{field} #{normalize_range_begin(range)},#{normalize_range_end(range)})"
+    else
+      "#{field}:#{normalize_range_begin(range)}..#{normalize_range_end(range)}"
+    end
+  end
+
+  def normalize_range_begin(range)
+    if range.begin.nil? || (range.begin.is_a?( Numeric) && range.begin.to_f.infinite?)
+      # lower end of range is open
+      return api_version == '2013-01-01' ? '{' : ''
+    else
+      # lower end of range is fixed
+      return api_version == '2013-01-01' ? "[#{normalize_range_value(range.begin)}" : "#{normalize_range_value(range.begin)}"
+    end
+  end
+
+  def normalize_range_end(range)
+    if range.end.nil? || (range.end.is_a?( Numeric) && range.end.to_f.infinite?)
+      # upper end of range is open
+      return api_version == '2013-01-01' ? '}' : ''
+    else
+      # upper end of range is fixed
+      return api_version == '2013-01-01' ? "#{normalize_range_value(range.end)}#{range.exclude_end? ? '}' : ']'}" : "#{normalize_range_value(range.end)}"
+    end    
+  end
+
+  def normalize_range_value(value)
+    if value.is_a?( Date)
+      # '2013-01-01T00:00:00Z'
+      "'#{value.strftime('%FT%TZ')}'"
+    else
+      value.to_s
+    end
+  end
+
+  # Private: Builds the geographic query from a passed hash
+  #
+  #     options - a hash of data required to build the geo query
+  #
+  def geo_query(options = {})
+    field     = nil
+    latitude  = nil
+    longitude = nil
+    radius    = nil
+    unit      = :kilometers
+    sort      = nil
+
+    options.each do |key,value|
+      case key.to_sym
+      when :field
+        field = value.to_s
+      when :lat, :latitude
+        latitude = value
+      when :lng, :long, :longitude
+        longitude = value
+      when :radius
+        radius = value
+      when :sort
+        sort = value
+      when :unit
+        unit = value.to_sym
+      else
+        if value.is_a?( Array) && value.length == 2
+          field = key.to_s
+          latitude = value[0]
+          longitude = value[1]
+        end
+      end
+    end
+
+    # require basic info (NB: should we throw exception? if something is missing?    should we do more type / error checking?)
+    return nil unless latitude && longitude && field
+
+    gq = {}
+
+    if radius && radius.kind_of?( Numeric)
+      # convert to kilometers (the default)
+      case unit
+      when :degree, :degrees
+        # the distance between longitudinal arcs decreases as latitude approaches the poles
+        radius = ( radius * Asari::Geography.meters_per_degree_of_longitude( latitude)) / 1000.0
+      when :mile, :miles
+        # kilometers per mile
+        radius *= 1.609344
+      when :meters, :meter
+        # convert to kilometers
+        radius /= 1000.0
+      else
+        # when :kilometers, :kilometer, :km, :kms
+        # nothing to do - this is the default unit
+      end
+
+      # ok - we have our radius in km.   compute the bounding box 
+      box = Asari::Geography.coordinate_box( lat: latitude, lng: longitude, meters: (radius * 1000).to_i)
+
+      # coordinate box gives us Lower Left and Upper Right...
+      lower_left  = Asari::Geography.int_to_degrees( lat: box[:lat].begin, lng: box[:lng].begin)
+      upper_right = Asari::Geography.int_to_degrees( lat: box[:lat].end,   lng: box[:lng].end)
+
+      # but Cloudsearch wants Upper Left and Lower Right
+      upper_left  = {lat: upper_right[:lat], lng: lower_left[:lng]}
+      lower_right = {lat: lower_left[:lat],  lng: upper_right[:lng]}
+
+      gq['fq'] = "#{field}:['#{upper_left[:lat]},#{upper_left[:lng]}','#{lower_right[:lat]},#{lower_right[:lng]}']"    # range query on the specified latlon field
+      gq['q.parser'] = 'structured'
+    else
+      # no radius specified, sort based on distance from the given lat/lng
+      sort = true if sort.nil?
+    end
+
+    if sort
+      gq['expr.distance'] = "haversin(#{latitude},#{longitude},#{field}.latitude,#{field}.longitude)"
+      gq['sort'] = 'distance asc'
+    end
+
+    gq
+  end
+
+  # sorting/ranking parameter
 
   def normalize_rank(rank)
     rank = Array(rank)
@@ -247,11 +435,6 @@ class Asari
     else
       rank[1] == :desc ? "-#{rank[0]}" : rank[0]
     end
-  end
-
-  def convert_date_or_time(obj)
-    return obj unless [Time, Date, DateTime].include?(obj.class)
-    obj.to_time.to_i
   end
 
 end

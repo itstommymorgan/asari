@@ -13,12 +13,19 @@ class Asari
     def self.included(base)
       base.extend(ClassMethods)
 
-      if !DELAYED_ASARI_INDEX
+      is_delayed = base.respond_to?( :delayed_asari_index?) && base.delayed_asari_index?
+
+      if !is_delayed && !DELAYED_ASARI_INDEX
+        # BOZO - remove these print statements before merge request!!
+        Rails.logger.info( 'ASARI INDEXING is NOT delayed -- adding active record callbacks')
         base.class_eval do
           before_destroy :asari_remove_from_index
           after_create :asari_add_to_index
           after_update :asari_update_in_index
         end
+      else
+        # BOZO - remove these print statements before merge request!!
+        Rails.logger.info( 'ASARI INDEXING is DELAYED -- add your own indexing hooks!!')
       end
     end
 

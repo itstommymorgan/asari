@@ -37,7 +37,7 @@ describe "Asari" do
       [Time, Date, DateTime, ActiveSupport::TimeWithZone].each do |klass|
         let(:field) { klass.new(0,0) }
 
-        its(:class) { should == Fixnum }
+        it{ expect(subject.class).to eq(Fixnum) }
       end
     end
 
@@ -45,7 +45,7 @@ describe "Asari" do
       ["string", 5, 1.0, :test].each do |obj|
         let(:field) { obj }
 
-        its(:class) { should == field.class }
+        it{ expect(subject.class).to eq(field.class) }
       end
     end
   end

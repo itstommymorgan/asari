@@ -26,14 +26,14 @@ describe Asari do
         it "does add to the index if the :when option returns true" do
           expect(@arcs.was_asked).to eq(false)
           @arcs.be_indexable = true
-          @asari.should_receive(:add_item).with(1, { :name => "Tommy", :email => "some@email.com"})
+          expect(@asari).to receive(:add_item).with(1, { :name => "Tommy", :email => "some@email.com"})
           @arcs.asari_add_to_index
           expect(@arcs.was_asked).to eq(true)
         end
 
         it "deletes the item from the index if the :when option returns false when the item is updated" do
           expect(@arcs.was_asked).to eq(false)
-          @asari.should_receive(:remove_item).with(1)
+          expect(@asari).to receive(:remove_item).with(1)
           @arcs.asari_update_in_index
           expect(@arcs.was_asked).to eq(true)
         end
@@ -41,7 +41,7 @@ describe Asari do
         it "updates the item in the index if the :when option returns true when the item is updated" do
           expect(@arcs.was_asked).to eq(false)
           @arcs.be_indexable = true
-          @asari.should_receive(:update_item).with(1, { :name => "Tommy", :email => "some@email.com"})
+          expect(@asari).to receive(:update_item).with(1, { :name => "Tommy", :email => "some@email.com"})
           @arcs.asari_update_in_index
           expect(@arcs.was_asked).to eq(true)
         end

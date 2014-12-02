@@ -437,7 +437,7 @@ class Asari
           top    ||= value[:top]
           right  ||= value[:right]
           bottom ||= value[:bottom]
-          lef    ||= value[:bottom]
+          left   ||= value[:left]
         end
       end
     end

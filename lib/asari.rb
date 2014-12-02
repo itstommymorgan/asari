@@ -476,15 +476,17 @@ class Asari
       # ok - we have our radius in km.   compute the bounding box 
       box = Asari::Geography.coordinate_box( lat: latitude, lng: longitude, meters: (radius * 1000).to_i)
 
-      # coordinate box gives us Lower Left and Upper Right...
-      lower_left  = Asari::Geography.int_to_degrees( lat: box[:lat].begin, lng: box[:lng].begin)
-      upper_right = Asari::Geography.int_to_degrees( lat: box[:lat].end,   lng: box[:lng].end)
+      # coordinate box gives us Bottom Left and Top Right...
+      bottom_left = Asari::Geography.int_to_degrees( lat: box[:lat].begin, lng: box[:lng].begin)
+      top_right   = Asari::Geography.int_to_degrees( lat: box[:lat].end,   lng: box[:lng].end)
 
-      # but Cloudsearch wants Upper Left and Lower Right
-      upper_left  = {lat: upper_right[:lat], lng: lower_left[:lng]}
-      lower_right = {lat: lower_left[:lat],  lng: upper_right[:lng]}
+      # but Cloudsearch wants Top/Left and Bottom/Right
+      top    = top_right[:lat]
+      right  = top_right[:lng]
+      bottom = bottom_left[:lat]
+      left   = bottom_left[:lng]
 
-      gq['fq'] = "#{field}:['#{upper_left[:lat]},#{upper_left[:lng]}','#{lower_right[:lat]},#{lower_right[:lng]}']"    # range query on the specified latlon field
+      gq['fq'] = "#{field}:['#{top},#{left}','#{bottom},#{right}']"    # range query on the specified latlon field
       gq['q.parser'] = 'structured'
     else
       # no radius specified, sort based on distance from the given lat/lng

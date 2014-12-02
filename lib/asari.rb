@@ -342,8 +342,34 @@ class Asari
   end
 
   # Private: Builds the geographic query from a passed hash
+  #   options - a hash of data required to build the geo query
   #
-  #     options - a hash of data required to build the geo query
+  #   Use case #1:   Just sort by distance from a given point...
+  #   {
+  #     field:     :location
+  #     latitude:  43.7,
+  #     longitude: -105.2
+  #   }
+  #   shorthand version -- {location: [43.7, -105.2]}
+  #
+  #   Use case #2:   If radius is specified, then determine the area by center and radius (default unit is :km).   and, optionally, sort if requested
+  #   {
+  #     field:     :location
+  #     latitude:  43.7,
+  #     longitude: -105.2
+  #     radius:    10
+  #     sort:      true
+  #   }
+  #   shorthand version -- {location: [43.7, -105.2], radius: 10, sort: true}
+  #
+  #   Use case #3:   If a bounding box is given, then just use what is given. (and, sort, if requested)
+  #   {
+  #     field:     :location
+  #     latitude:  (43.7...44.2)           # range: bottom to top
+  #     longitude: (-105.2...-104.8)       # range: left to right
+  #   }
+  #   long version -- {field: :location, top: 44.2, right: -104.8, bottom: 43.7, left: -105.2}
+  #   shorthand version -- {location: {lat: (43.7...44.2), lng: (-105.2...-104.8)}}
   #
   def geo_query(options = {})
     field     = nil
@@ -351,6 +377,10 @@ class Asari
     longitude = nil
     radius    = nil
     unit      = :kilometers
+    top       = nil
+    right     = nil
+    bottom    = nil
+    left      = nil
     sort      = nil
 
     options.each do |key,value|
@@ -358,9 +388,19 @@ class Asari
       when :field
         field = value.to_s
       when :lat, :latitude
-        latitude = value
+        if value.is_a?( Range)
+          bottom = value.begin.to_f
+          top    = value.end.to_f
+        elsif value.is_a?( Numeric)
+          latitude = value.to_f
+        end
       when :lng, :long, :longitude
-        longitude = value
+        if value.is_a?( Range)
+          left  = value.begin.to_f
+          right = value.end.to_f
+        elsif value.is_a?( Numeric)
+          longitude = value.to_f
+        end
       when :radius
         radius = value
       when :sort
@@ -368,21 +408,56 @@ class Asari
       when :unit
         unit = value.to_sym
       else
+        # key is not a known keyword -- probably shorthand -- field: <value>
         if value.is_a?( Array) && value.length == 2
-          field = key.to_s
-          latitude = value[0]
+          # shorthand -- field: [lat, lng]
+          field     = key.to_s
+          latitude  = value[0]
           longitude = value[1]
+        elsif value.is_a?( Hash)
+          # shorthand -- field: {latitude: <latitude-exp>, longitude: <longitude-exp>}, or field: {top: <top>, right: <right>, bottom: <bottom>, left: <left>}
+          field = key.to_s
+          latitude_exp  = value[:latitude] || value[:lat]
+          longitude_exp = value[:longitude] || value[:long] || value[:lng]
+          if latitude_exp && longitude_exp
+            if latitude_exp.is_a?( Range)
+              bottom = latitude_exp.begin.to_f
+              top    = latitude_exp.end.to_f
+            elsif latitude_exp.is_a?( Numeric)
+              latitude = latitude_exp.to_f
+            end
+            if longitude_exp.is_a?( Range)
+              left  = longitude_exp.begin.to_f
+              right = longitude_exp.end.to_f
+            elsif longitude_exp.is_a?( Numeric)
+              longitude = longitude_exp.to_f
+            end
+          end
+          # anything that is specified explicitly, wins
+          top    ||= value[:top]
+          right  ||= value[:right]
+          bottom ||= value[:bottom]
+          lef    ||= value[:bottom]
         end
       end
     end
 
     # require basic info (NB: should we throw exception? if something is missing?    should we do more type / error checking?)
-    return nil unless latitude && longitude && field
+    return nil unless field && ((top && right && bottom && left) || (latitude && longitude))
 
     gq = {}
 
-    if radius && radius.kind_of?( Numeric)
-      # convert to kilometers (the default)
+    if top && right && bottom && left
+      # full bounding box is specified
+      gq['fq'] = "#{field}:['#{top},#{left}','#{bottom},#{right}']"    # range query on the specified latlon field
+      gq['q.parser'] = 'structured'
+      if sort
+        # when sorting is enabled, we need to sort from the center (unless lat/long was given separately in options)
+        latitude ||= ( top + bottom) / 2.0
+        longitude ||= ( left + right) / 2.0
+      end
+    elsif radius && radius.kind_of?( Numeric)
+      # radius is given convert to kilometers (the default)
       case unit
       when :degree, :degrees
         # the distance between longitudinal arcs decreases as latitude approaches the poles

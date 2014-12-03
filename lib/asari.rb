@@ -346,7 +346,7 @@ class Asari
   #
   #   Use case #1:   Just sort by distance from a given point...
   #   {
-  #     field:     :location
+  #     field:     :location,
   #     latitude:  43.7,
   #     longitude: -105.2
   #   }
@@ -354,24 +354,26 @@ class Asari
   #
   #   Use case #2:   If radius is specified, then determine the area by center and radius (default unit is :km).   and, optionally, sort if requested
   #   {
-  #     field:     :location
+  #     field:     :location,
   #     latitude:  43.7,
-  #     longitude: -105.2
-  #     radius:    10
-  #     sort:      true
+  #     longitude: -105.2,
+  #     radius:    10,
+  #     unit:      :miles,
+  #     sort:      true,
   #   }
   #   shorthand version -- {location: [43.7, -105.2], radius: 10, sort: true}
   #
   #   Use case #3:   If a bounding box is given, then just use what is given. (and, sort, if requested)
   #   {
   #     field:     :location
-  #     latitude:  (43.7...44.2)           # range: bottom to top
-  #     longitude: (-105.2...-104.8)       # range: left to right
+  #     latitude:  (43.7..44.2)           # range: bottom to top
+  #     longitude: (-105.2..-104.8)       # range: left to right
   #   }
   #   long version -- {field: :location, top: 44.2, right: -104.8, bottom: 43.7, left: -105.2}
   #   shorthand version -- {location: {lat: (43.7...44.2), lng: (-105.2...-104.8)}}
   #
   def geo_query(options = {})
+    do_query  = false
     field     = nil
     latitude  = nil
     longitude = nil
@@ -405,7 +407,7 @@ class Asari
         radius = value
       when :sort
         sort = value
-      when :unit
+      when :unit, :units
         unit = value.to_sym
       else
         # key is not a known keyword -- probably shorthand -- field: <value>
@@ -433,7 +435,7 @@ class Asari
               longitude = longitude_exp.to_f
             end
           end
-          # anything that is specified explicitly, wins
+          # values may have been specified explicitly
           top    ||= value[:top]
           right  ||= value[:right]
           bottom ||= value[:bottom]
@@ -443,18 +445,18 @@ class Asari
     end
 
     # require basic info (NB: should we throw exception? if something is missing?    should we do more type / error checking?)
-    return nil unless field && ((top && right && bottom && left) || (latitude && longitude))
+    raise ArgumentError.new( "Not enough options provided for geo query: #{options}") unless field && ((top && right && bottom && left) || (latitude && longitude))
 
     gq = {}
 
     if top && right && bottom && left
-      # full bounding box is specified
-      gq['fq'] = "#{field}:['#{top},#{left}','#{bottom},#{right}']"    # range query on the specified latlon field
-      gq['q.parser'] = 'structured'
+      # full bounding box is specified -- we are all set to do the bounding box query
+      do_query = true
       if sort
-        # when sorting is enabled, we need to sort from the center (unless lat/long was given separately in options)
-        latitude ||= ( top + bottom) / 2.0
-        longitude ||= ( left + right) / 2.0
+        # when sorting is enabled, we need to sort from the center
+        latitude = ( top + bottom) / 2.0
+        mid = ( left + right) / 2.0
+        longitude = ( left > 0 && right < 0) ? ( mid > 0 ? mid-180.0 : mid+180.0) : mid   # conditionl adjustment for when the box spans the international date line
       end
     elsif radius && radius.kind_of?( Numeric)
       # radius is given convert to kilometers (the default)
@@ -486,11 +488,16 @@ class Asari
       bottom = bottom_left[:lat]
       left   = bottom_left[:lng]
 
-      gq['fq'] = "#{field}:['#{top},#{left}','#{bottom},#{right}']"    # range query on the specified latlon field
-      gq['q.parser'] = 'structured'
+      # ready to do the bounding box query
+      do_query = true
     else
       # no radius specified, sort based on distance from the given lat/lng
       sort = true if sort.nil?
+    end
+
+    if do_query
+      gq['fq'] = "#{field}:['#{top},#{left}','#{bottom},#{right}']"    # range query on the specified latlon field
+      gq['q.parser'] = 'structured'
     end
 
     if sort

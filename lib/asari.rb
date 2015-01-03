@@ -21,11 +21,20 @@ class Asari
 
   attr_writer :api_version
   attr_writer :search_domain
+  attr_writer :aws_url
   attr_writer :aws_region
 
-  def initialize(search_domain=nil, aws_region=nil)
-    @search_domain = search_domain
-    @aws_region = aws_region
+  DEFAULT_INITIALIZE_OPTS = {
+    search_domain: nil, aws_region: nil, aws_url: "cloudsearch.amazonaws.com"
+    }.freeze
+
+  # extra aws_region for backward compatibility should be removed once major version is bumped
+  def initialize(opts={}, aws_region = nil)
+    opts = {search_domain: opts, aws_region: aws_region} if opts.is_a? String
+    opts = DEFAULT_INITIALIZE_OPTS.merge opts
+    @search_domain = opts[:search_domain]
+    @aws_url = opts[:aws_url]
+    @aws_region = opts[:aws_region]
   end
 
   # Public: returns the current search_domain, or raises a
@@ -49,6 +58,10 @@ class Asari
     @aws_region || "us-east-1"
   end
 
+  def search_url
+    "http://search-#{search_domain}.#{aws_region}.#{@aws_url}/#{api_version}/search"
+  end
+
   # Public: Search for the specified term.
   #
   # Examples:
@@ -70,7 +83,7 @@ class Asari
     bq = boolean_query(options[:filter]) if options[:filter]
     page_size = options[:page_size].nil? ? 10 : options[:page_size].to_i
 
-    url = "http://search-#{search_domain}.#{aws_region}.cloudsearch.amazonaws.com/#{api_version}/search"
+    url = search_url
     url += "?q=#{CGI.escape(term.to_s)}"
     url += "&bq=#{CGI.escape(bq)}" if options[:filter]
     url += "&size=#{page_size}"
@@ -170,7 +183,7 @@ class Asari
   # Internal: helper method: common logic for queries against the doc endpoint.
   #
   def doc_request(query)
-    endpoint = "http://doc-#{search_domain}.#{aws_region}.cloudsearch.amazonaws.com/#{api_version}/documents/batch"
+    endpoint = "http://doc-#{search_domain}.#{aws_region}.#{@aws_url}/#{api_version}/documents/batch"
 
     options = { :body => [query].to_json, :headers => { "Content-Type" => "application/json"} }
 

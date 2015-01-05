@@ -235,10 +235,18 @@ class Asari
     rank[1] == :desc ? "-#{rank[0]}" : rank[0]
   end
 
-  def convert_date_or_time(obj)
-    return obj unless [Time, Date, DateTime].include?(obj.class)
-    obj.to_time.to_i
+
+  def valid_date_time_classes
+    list = [Time, Date, DateTime]
+    list << ActiveSupport::TimeWithZone if defined?(ActiveSupport)
+    list
   end
+
+  def convert_date_or_time(obj)
+    return obj unless valid_date_time_classes.include?(obj.class)
+    (obj.respond_to?(:utc) ? obj.utc : obj).strftime("%FT%TZ")
+  end
+
 end
 
 Asari.mode = :sandbox # default to sandbox

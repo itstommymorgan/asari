@@ -131,9 +131,16 @@ describe Asari do
           })
         end
 
-        it "ignores full text search when filter option is used" do
-          HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2013-01-01/search?q=%28or+is_donut%3A%27true%27%28and+fried%3A%27true%27%29%29&q.parser=structured&size=10")
+        it "does full text search when filter option is used" do
+          HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2013-01-01/search?q=%28and+%27nom%27+%28or+is_donut%3A%27true%27%28and+fried%3A%27true%27%29%29%29&q.parser=structured&size=10")
           @asari.search("nom", filter: { or: { is_donut: true, and:
+                                               { round: "", frosting: nil, fried: true }}
+          })
+        end
+
+        it "uses filters when term is blank" do
+          HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2013-01-01/search?q=%28or+is_donut%3A%27true%27%28and+fried%3A%27true%27%29%29&q.parser=structured&size=10")
+          @asari.search("", filter: { or: { is_donut: true, and:
                                                { round: "", frosting: nil, fried: true }}
           })
         end

@@ -43,12 +43,26 @@ describe Asari do
           ActiveRecordFake.asari_find("fritters")
         end
 
-        it "will return a list of model objects when you search" do
-          @asari.should_receive(:search).with("fritters", {}).and_return(["1"])
+        context "will return a list of model objects" do
+          it "when you search for numeric id" do
+            @asari.should_receive(:search).with("fritters", {}).and_return(["1"])
 
-          results = ActiveRecordFake.asari_find("fritters")
-          expect(results.class).to eq(Array)
-          expect(results[0].class).to eq(ActiveRecordFake)
+            results = ActiveRecordFake.asari_find("fritters")
+            expect(results.class).to eq(Array)
+            expect(results[0].class).to eq(ActiveRecordFake)
+          end
+
+          let(:result) { ActiveRecordFake.new(id: "SomeString")}
+
+          it "when you search for string id" do
+            ActiveRecordFake.should_receive(:where).with(an_instance_of(String), ["SomeString"]).and_return([result])
+            @asari.should_receive(:search).with("fritters", {}).and_return(["SomeString"])
+
+            results = ActiveRecordFake.asari_find("fritters")
+            expect(results.class).to eq(Array)
+            expect(results[0].class).to eq(ActiveRecordFake)
+            expect(results.first).to eq(result)
+          end
         end
 
         it "will return an empty list when you search for a term that isn't in the index" do

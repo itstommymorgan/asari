@@ -73,7 +73,10 @@ class Asari
     url = "http://search-#{search_domain}.#{aws_region}.cloudsearch.amazonaws.com/#{api_version}/search"
 
     if api_version == '2013-01-01'
-      if options[:filter]
+      if options[:filter] and term != ""
+        url += "?q=#{CGI.escape("(and '#{term.to_s}' #{bq})")}"
+        url += "&q.parser=structured"
+      elsif options[:filter]
         url += "?q=#{CGI.escape(bq)}"
         url += "&q.parser=structured"
       else

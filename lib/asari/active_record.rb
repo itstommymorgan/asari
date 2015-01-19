@@ -178,9 +178,7 @@ class Asari
       #   communicating with the CloudSearch server.
       def asari_find(term, options = {})
         records = self.asari_instance.search(term, options)
-        ids = records.map { |id| id.to_i }
-
-        records.replace(Array(self.where("id in (?)", ids)))
+        records.replace(Array(self.where("id in (?)", records)))
       end
 
       # Public: method for handling errors from Asari document updates. By

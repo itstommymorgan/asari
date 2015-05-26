@@ -2,8 +2,8 @@ require_relative '../asari_spec_helper'
 
 describe Asari do
   describe Asari::Collection do
-    before :each do  
-      response = OpenStruct.new(:parsed_response => { "hits" => { "found" => 10, "start" => 0, "hit" => ["1","2"]}})
+    before :each do
+      response = OpenStruct.new(:parsed_response => { "hits" => { "found" => 10, "start" => 0, "hit" => [{"id" => "1"},{"id" => "2"}]}})
       @collection = Asari::Collection.new(response, 2)
     end
 
@@ -26,5 +26,12 @@ describe Asari do
     it "calculates the offset correctly" do
       expect(@collection.offset).to eq(0)
     end
+
+    it "correctly parses response" do
+      expect(@collection.size).to eq(2)
+      expect(@collection.first.class).to eq(String)
+      expect(@collection.first).to eq("1")
+    end
+
   end
 end

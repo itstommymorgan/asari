@@ -40,7 +40,7 @@ class Asari
   # CloudSearch API).
   #
   def api_version
-    @api_version || ENV['CLOUDSEARCH_API_VERSION'] || "2011-02-01" 
+    @api_version || ENV['CLOUDSEARCH_API_VERSION'] || "2011-02-01"
   end
 
   # Public: returns the current aws_region, or the sensible default of
@@ -67,37 +67,14 @@ class Asari
     return Asari::Collection.sandbox_fake if self.class.mode == :sandbox
     term,options = "",term if term.is_a?(Hash) and options.empty?
 
-    bq = boolean_query(options[:filter]) if options[:filter]
-    page_size = options[:page_size].nil? ? 10 : options[:page_size].to_i
+    page_size = page_size_options(options)
 
     url = "http://search-#{search_domain}.#{aws_region}.cloudsearch.amazonaws.com/#{api_version}/search"
-
-    if api_version == '2013-01-01'
-      if options[:filter]
-        url += "?q=#{CGI.escape(bq)}"
-        url += "&q.parser=structured"
-      else
-        url += "?q=#{CGI.escape(term.to_s)}"
-      end
-    else
-      url += "?q=#{CGI.escape(term.to_s)}"
-      url += "&bq=#{CGI.escape(bq)}" if options[:filter]
-    end
-
-    return_statement = api_version == '2013-01-01' ? 'return' : 'return-fields'
+    url += build_query(term, options)
     url += "&size=#{page_size}"
-    url += "&#{return_statement}=#{options[:return_fields].join ','}" if options[:return_fields]
-
-    if options[:page]
-      start = (options[:page].to_i - 1) * page_size
-      url << "&start=#{start}"
-    end
-
-    if options[:rank]
-      rank = normalize_rank(options[:rank])
-      rank_or_sort = api_version == '2013-01-01' ? 'sort' : 'rank'
-      url << "&#{rank_or_sort}=#{CGI.escape(rank)}"
-    end
+    url += return_fields_options(options)
+    url += page_options(options)
+    url += rank_options(options)
 
     begin
       response = HTTParty.get(url)
@@ -241,7 +218,7 @@ class Asari
   def normalize_rank(rank)
     rank = Array(rank)
     rank << :asc if rank.size < 2
-    
+
     if api_version == '2013-01-01'
       "#{rank[0]} #{rank[1]}"
     else
@@ -252,6 +229,54 @@ class Asari
   def convert_date_or_time(obj)
     return obj unless [Time, Date, DateTime].include?(obj.class)
     obj.to_time.to_i
+  end
+
+  def build_query(term, options)
+    bq = boolean_query(options[:filter]) if options[:filter]
+    query = ""
+    if api_version == '2013-01-01'
+      if options[:filter] and term != ""
+        query += "?q=#{CGI.escape("(and '#{term.to_s}' #{bq})")}"
+        query += "&q.parser=structured"
+      elsif options[:filter]
+        query += "?q=#{CGI.escape(bq)}"
+        query += "&q.parser=structured"
+      else
+        query += "?q=#{CGI.escape(term.to_s)}"
+      end
+    else
+      query = "?q=#{CGI.escape(term.to_s)}"
+      query += "&bq=#{CGI.escape(bq)}" if options[:filter]
+    end
+    query
+  end
+
+  def page_options(options)
+    return "" unless options[:page]
+
+    start = (options[:page].to_i - 1) * page_size_options(options)
+    "&start=#{start}"
+  end
+
+  def page_size_options(options)
+    return 10 unless options[:page_size]
+
+    options[:page_size].to_i
+  end
+
+  def rank_options(options)
+    return "" unless options[:rank]
+
+    rank = normalize_rank(options[:rank])
+    rank_or_sort = api_version == '2013-01-01' ? 'sort' : 'rank'
+    "&#{rank_or_sort}=#{CGI.escape(rank)}"
+  end
+
+  def return_fields_options(options)
+    return ""  unless options[:return_fields]
+
+    return_statement = api_version == '2013-01-01' ? 'return' : 'return-fields'
+    "&#{return_statement}=#{options[:return_fields].join ','}"
   end
 
 end

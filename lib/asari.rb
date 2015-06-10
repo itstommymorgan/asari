@@ -55,6 +55,7 @@ class Asari
   #
   #     @asari.search("fritters") #=> ["13","28"]
   #     @asari.search(filter: { and: { type: 'donuts' }}) #=> ["13,"28","35","50"]
+  #     @asari.search(filter: "(or type:'donut' type:'bagel')")  #=> ["13,"28","35","50", "80"]
   #     @asari.search("fritters", filter: { and: { type: 'donuts' }}) #=> ["13"]
   #
   # Returns: An Asari::Collection containing all document IDs in the system that match the
@@ -67,7 +68,13 @@ class Asari
     return Asari::Collection.sandbox_fake if self.class.mode == :sandbox
     term,options = "",term if term.is_a?(Hash) and options.empty?
 
-    bq = boolean_query(options[:filter]) if options[:filter]
+    bq = if options[:filter]
+      if options[:filter].is_a?(String)
+        options[:filter]
+      else
+        boolean_query(options[:filter])
+      end
+    end
     page_size = options[:page_size].nil? ? 10 : options[:page_size].to_i
 
     url = "http://search-#{search_domain}.#{aws_region}.cloudsearch.amazonaws.com/#{api_version}/search"

@@ -112,6 +112,11 @@ describe Asari do
   end
 
   describe "boolean searching" do
+    it "supports a string as the filters value" do
+      HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=&bq=%28and+foo%3A%27bar%27+baz%3A%27bug%27%29&size=10")
+      @asari.search(filter: "(and foo:'bar' baz:'bug')")
+    end
+
     it "builds a query string from a passed hash" do
       HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2011-02-01/search?q=&bq=%28and+foo%3A%27bar%27+baz%3A%27bug%27%29&size=10")
       @asari.search(filter: { and: { foo: "bar", baz: "bug" }})

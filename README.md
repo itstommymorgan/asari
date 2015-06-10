@@ -3,7 +3,7 @@
 ## Note on 2013-01-01 Amazon API support
 
 We are actively working on a 1.0 version with support for the latest api along with complete Active Asari support.  It should be solid enough to use in production via
-  
+
     gem "asari", :git => "git@github.com:wellbredgrapefruit/asari.git", :branch => "1.0"
 
 ## Description
@@ -38,19 +38,26 @@ Amazon Cloud Search will give you a Search Endpoint and Document Endpoint.  When
     asari.search(filter: { and: { title: "donut", type: "cruller" }})
     asari.search("boston creme", filter: { and: { title: "donut", or: { type: "cruller|twist" }}}) # Full text search and nested boolean logic
 
+Boolean Queries can also be provided as strings that will be directly used in
+the query request. This allows for more control over the query string as well as
+multiple uses of the same field name (where Ruby hashes don't allow for
+non-unique keys.)
+
+    asari.search(filter: "(or type:'donut' type:'bagel')")
+
 For more information on how to use Cloudsearch boolean queries, [see the
 documentation.](http://docs.aws.amazon.com/cloudsearch/latest/developerguide/booleansearch.html)
 
 ### Geospatial Query Usage
 
-While Cloudsearch does not natively support location search, you can implement rudimentary location search by representing latitude and longitude as integers in your search domain. Asari has a Geography module you can use to simplify the conversion of latitude and longitude to cartesian coordinates as well as the generation of a coordinate box to search within. Asari's Boolean Query syntax can then be used to search within the area. Note that because Cloudsearch only supports 32-bit unsigned integers, it is only possible to store latitude and longitude to two place values. This means very precise search isn't possible using Asari and Cloudsearch. 
+While Cloudsearch does not natively support location search, you can implement rudimentary location search by representing latitude and longitude as integers in your search domain. Asari has a Geography module you can use to simplify the conversion of latitude and longitude to cartesian coordinates as well as the generation of a coordinate box to search within. Asari's Boolean Query syntax can then be used to search within the area. Note that because Cloudsearch only supports 32-bit unsigned integers, it is only possible to store latitude and longitude to two place values. This means very precise search isn't possible using Asari and Cloudsearch.
 
     coordinates = Asari::Geography.degrees_to_int(lat: 45.52, lng: 122.68)
       #=> { lat: 2506271416, lng: 111298648 }
     asari.add_item("1", { name: "Tommy Morgan", lat: coordinates[:lat], lng: coordinates[:lng] })
       #=> nil
     coordinate_box = Asari::Geography.coordinate_box(lat: 45.2, lng: 122.85, meters: 7500)
-      #=> { lat: 2505521415..2507021417, lng: 111263231..111334065 } 
+      #=> { lat: 2505521415..2507021417, lng: 111263231..111334065 }
     asari.search("tommy", filter: { and: coordinate_box }
       #=> ["1"] = a list of document IDs
 
@@ -70,7 +77,7 @@ you want to actually connect to the search index, just do the following:
 
 You can turn the sandbox back on, if you like, by setting the mode to `:sandbox`
 again.
-    
+
 #### Pagination
 
 Asari defaults to a page size of 10 (because that's CloudSearch's default), but
@@ -81,7 +88,7 @@ it allows you to specify pagination parameters with any search:
 The results you get back from Asari#search aren't actually Array objects,
 either: they're Asari::Collection objects, which are (currently) API-compatible
 with will\_paginate:
-  
+
     results = asari.search("tommy", :page_size => 30, :page => 10)
     results.total_entries #=> 5000
     results.total_pages   #=> 167
@@ -91,9 +98,9 @@ with will\_paginate:
 
 #### Retrieving Data From Index Fields
 
-By default Asari only returns the document id's for any hits returned from a search. 
+By default Asari only returns the document id's for any hits returned from a search.
 If you have result_enabled a index field you can have asari resturn that field in the
-result set without having to hit a database to get the results.  Simply pass the 
+result set without having to hit a database to get the results.  Simply pass the
 :return_fields option with an array of fields
 
     results = asari.search "Beavis", :return_fields => ["name", "address"]
@@ -105,7 +112,7 @@ The result will look like this
 
 #### ActiveRecord
 
-By default the ActiveRecord module for Asari is not included in your project.  To use it you will need to require it via 
+By default the ActiveRecord module for Asari is not included in your project.  To use it you will need to require it via
 
     require 'asari/active_record'
 
@@ -126,10 +133,10 @@ index, and can represent any function on your AR object. You can then interact
 with your AR objects as follows:
 
     # Klass.asari_find returns a list of model objects in an
-    # Asari::Collection... 
+    # Asari::Collection...
     User.asari_find("tommy") #=> [<User:...>, <User:...>, <User:...>]
     User.asari_find("tommy", :rank => "name")
-    
+
     # or with a specific instance, if you need to manually do some index
     # management...
     @user.asari_add_to_index
@@ -142,7 +149,7 @@ You can also specify a :when option, like so:
     :favorite_sweater], :when => :indexable)
 
 or
-    
+
     asari_index("search-domain-for-users", [:name, :email, :twitter_handle,
     :favorite_sweater], :when => Proc.new { |user| !user.admin && user.indexable })
 
@@ -232,6 +239,6 @@ without limitation the rights to use, copy, modify, merge, publish,
 distribute, sublicense, and/or sell copies of the Software, and to
 permit persons to whom the Software is furnished to do so, subject to
 the following conditions:
-          
+
 The above copyright notice and this permission notice shall be
 included in all copies or substantial portions of the Software.

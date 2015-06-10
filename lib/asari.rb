@@ -55,6 +55,7 @@ class Asari
   #
   #     @asari.search("fritters") #=> ["13","28"]
   #     @asari.search(filter: { and: { type: 'donuts' }}) #=> ["13,"28","35","50"]
+  #     @asari.search(filter: "(or type:'donut' type:'bagel')")  #=> ["13,"28","35","50", "80"]
   #     @asari.search("fritters", filter: { and: { type: 'donuts' }}) #=> ["13"]
   #
   # Returns: An Asari::Collection containing all document IDs in the system that match the

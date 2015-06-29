@@ -11,6 +11,10 @@ require "json"
 require "cgi"
 
 class Asari
+  # CloudSearch requires bucket size, so we provide fixed number
+  # we need all facets, so we guess it's big enough
+  MAX_FACETS_SIZE = 999
+
   def self.mode
     @@mode
   end
@@ -233,6 +237,8 @@ class Asari
 
   def build_query(term, options)
     bq = boolean_query(options[:filter]) if options[:filter]
+    fs = build_facet_string(options[:facets]) if options[:facets]
+
     query = ""
     if api_version == '2013-01-01'
       if options[:filter] and term != ""
@@ -244,11 +250,17 @@ class Asari
       else
         query += "?q=#{CGI.escape(term.to_s)}"
       end
+      query += "&#{fs}" if options[:facets]
     else
       query = "?q=#{CGI.escape(term.to_s)}"
       query += "&bq=#{CGI.escape(bq)}" if options[:filter]
     end
     query
+  end
+
+  def build_facet_string(facets)
+    escaped_braces = CGI.escape("{sort:'bucket',size:#{MAX_FACETS_SIZE}}")
+    facets.map { |f| "facet.#{f}=#{escaped_braces}" }.join("&")
   end
 
   def page_options(options)

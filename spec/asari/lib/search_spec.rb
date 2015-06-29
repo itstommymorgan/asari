@@ -51,7 +51,6 @@ describe Asari do
         HTTParty.should_receive(:get).with("#{url_base}/#{api_version}/search?q=#{query}")
         @asari.search("testsearch", :page_size => 20, :page => 3)
       end
-
     end
 
     context 'the 2011-02-01 api' do
@@ -177,8 +176,24 @@ describe Asari do
           @asari.search("testsearch", :rank => ["some_field", :desc])
         end
       end
-    end
 
+      describe "the facets option" do
+        let(:facets) { %w(genres) }
+        let(:facet_string) { "&facet.genres=%7Bsort%3A%27bucket%27%2Csize%3A999%7D" }
+
+        before do
+          expect(HTTParty).to receive(:get).with("#{url_base}/#{api_version}/search?q=testsearch#{facet_string}&size=10")
+        end
+
+        it { @asari.search("testsearch", :facets => facets) }
+
+        context "facets are not present" do
+          let(:facets) { nil }
+          let(:facet_string) { "" }
+          it { @asari.search("testsearch", :facets => facets) }
+        end
+      end
+    end
 
     it "returns a list of document IDs for search results." do
       result = @asari.search("testsearch")
@@ -255,9 +270,7 @@ describe Asari do
       HTTParty.stub(:get).and_raise(SocketError.new)
       expect { @asari.search("testsearch)") }.to raise_error Asari::SearchException
     end
-
   end
-
 
   describe "geography searching" do
     let(:api_version) { "2011-02-01" }
@@ -266,7 +279,6 @@ describe Asari do
       @asari.search filter: { and: Asari::Geography.coordinate_box(meters: 5000, lat: 45.52, lng: 122.6819) }
     end
   end
-
 
   describe "protected methods" do
     let(:api_version) { '2011-02-01' }

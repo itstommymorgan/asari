@@ -207,6 +207,12 @@ class Asari
         if %w(and or not).include?(key.to_s) && value.is_a?(Hash)
           sub_query = reduce.call(value)
           memo += "(#{key}#{sub_query})" unless sub_query.empty?
+        elsif key.to_s.match(/.*_or/) && value.is_a?(Hash)
+          sub_query = value.map do |or_key, or_value|
+            Array(or_value).map { |v| " #{or_key}:'#{v}'" }.join
+          end.join
+          memo += " " unless memo.empty?
+          memo += "(or#{sub_query})" unless sub_query.empty?
         else
           if value.is_a?(Range) || value.is_a?(Integer)
             memo += " #{key}:#{value}"

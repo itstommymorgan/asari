@@ -115,7 +115,7 @@ describe Asari do
       before(:each) {ENV['CLOUDSEARCH_API_VERSION'] = api_version}
       after(:each) {ENV['CLOUDSEARCH_API_VERSION'] = '2011-02-01'}
 
-      describe 'boolean searching,  structured queries' do
+      describe 'boolean searching, structured queries' do
         it "builds a query string from a passed hash" do
           query = CGI.escape("(and foo:'bar' baz:'bug')")
           HTTParty.should_receive(:get).with("#{url_base}/#{api_version}/search?q=#{query}#{options}")
@@ -153,10 +153,41 @@ describe Asari do
         end
 
         it "uses filters when term is blank" do
-          HTTParty.should_receive(:get).with("http://search-testdomain.us-east-1.cloudsearch.amazonaws.com/2013-01-01/search?q=%28or+is_donut%3A%27true%27%28and+fried%3A%27true%27%29%29&q.parser=structured&size=10")
+          query = CGI.escape("(or is_donut:'true'(and fried:'true'))")
+          HTTParty.should_receive(:get).with("#{url_base}/#{api_version}/search?q=#{query}#{options}")
           @asari.search("", filter: { or: { is_donut: true, and:
                                                { round: "", frosting: nil, fried: true }}
           })
+        end
+
+        context "use multiple values for 'or'" do
+          let(:query) do
+            CGI.escape("(and 'nom' (or categories:'Painting' categories:'Sculpture'))")
+          end
+          let(:filter) do
+            {
+              categories_or: { categories: %w(Painting Sculpture) }
+            }
+          end
+
+          before { HTTParty.should_receive(:get).with("#{url_base}/#{api_version}/search?q=#{query}#{options}") }
+          subject { @asari.search("nom", filter: filter) }
+
+          it { subject }
+
+          context "use multiple 'or' options" do
+            let(:query) do
+              CGI.escape("(and 'nom' (or categories:'Painting' categories:'Sculpture') (or types:'Art' types:'Writing'))")
+            end
+            let(:filter) do
+              {
+                categories_or: { categories: %w(Painting Sculpture) },
+                types_or: { types: %w(Art Writing) }
+              }
+            end
+
+            it { subject }
+          end
         end
       end
 

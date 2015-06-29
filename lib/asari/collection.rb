@@ -13,6 +13,7 @@ class Asari
     attr_reader :page_size
     attr_reader :total_entries
     attr_reader :total_pages
+    attr_reader :facets
 
     # Internal: method for returning a sandbox-friendly empty search result.
     #
@@ -30,7 +31,10 @@ class Asari
     # guess.
     #
     def initialize(httparty_response, page_size)
-      hits = httparty_response.parsed_response["hits"]
+      resp = httparty_response.parsed_response
+      @facets = resp["facets"] if resp["facets"]
+
+      hits = resp["hits"]
       @total_entries = hits["found"]
       @page_size = page_size
 

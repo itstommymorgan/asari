@@ -177,20 +177,41 @@ describe Asari do
         end
       end
 
-      describe "the facets option" do
-        let(:facets) { %w(genres) }
-        let(:facet_string) { "&facet.genres=%7Bsort%3A%27bucket%27%2Csize%3A999%7D" }
+      describe "the field_weights options" do
+        let(:field_weights) { { title: 1, keywords: 1 } }
+        let(:field_weights_string) { "&q.options=#{CGI.escape("{fields:['title^1','keywords^1']}")}" }
 
         before do
-          expect(HTTParty).to receive(:get).with("#{url_base}/#{api_version}/search?q=testsearch#{facet_string}&size=10")
+          expect(HTTParty).to receive(:get).with("#{url_base}/#{api_version}/search?q=testsearch&size=10#{field_weights_string}")
         end
 
-        it { @asari.search("testsearch", :facets => facets) }
+        subject { @asari.search("testsearch", :field_weights => field_weights) }
+
+        it { subject }
+
+        context "field_weights are not present" do
+          let(:field_weights) { nil }
+          let(:field_weights_string) { "" }
+          it { subject }
+        end
+      end
+
+      describe "the facets option" do
+        let(:facets) { %w(genres) }
+        let(:facets_string) { "&facet.genres=%7Bsort%3A%27bucket%27%2Csize%3A999%7D" }
+
+        before do
+          expect(HTTParty).to receive(:get).with("#{url_base}/#{api_version}/search?q=testsearch#{facets_string}&size=10")
+        end
+
+        subject { @asari.search("testsearch", :facets => facets) }
+
+        it { subject }
 
         context "facets are not present" do
           let(:facets) { nil }
-          let(:facet_string) { "" }
-          it { @asari.search("testsearch", :facets => facets) }
+          let(:facets_string) { "" }
+          it { subject }
         end
       end
     end

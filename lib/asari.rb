@@ -79,6 +79,7 @@ class Asari
     url += return_fields_options(options)
     url += page_options(options)
     url += rank_options(options)
+    url += field_weights_options(options)
 
     begin
       response = HTTParty.get(url)
@@ -261,6 +262,14 @@ class Asari
   def build_facet_string(facets)
     escaped_braces = CGI.escape("{sort:'bucket',size:#{MAX_FACETS_SIZE}}")
     facets.map { |f| "facet.#{f}=#{escaped_braces}" }.join("&")
+  end
+
+  def field_weights_options(options)
+    return "" unless options[:field_weights]
+
+    weights = options[:field_weights].map { |key, value| "\'#{key}^#{value}\'" }.join(",")
+    weights_string = CGI.escape("{fields:[#{weights}]}")
+    "&q.options=#{weights_string}"
   end
 
   def page_options(options)

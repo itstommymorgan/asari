@@ -160,6 +160,47 @@ describe Asari do
           })
         end
 
+        context "simple filter for fuzzy matching" do
+          let(:options) { "&size=10" }
+          let(:term) { "nom" }
+          let(:query) do
+            "nom&fq=#{CGI.escape("(or is_donut:'true'(and round:'true' frosting:'true' fried:'false'))")}"
+          end
+          let(:filter) do
+            { or: { is_donut: true, and: { round: true, frosting: true, fried: false } } }
+          end
+
+          before { HTTParty.should_receive(:get).with("#{url_base}/#{api_version}/search?q=#{query}#{options}") }
+
+          subject { @asari.search(term, simple_filter: filter) }
+
+          it { subject }
+
+          context "fuzzy query" do
+            let(:term) { "nom~2" }
+            let(:query) do
+              "#{CGI.escape('nom~2')}&fq=#{CGI.escape("(or is_donut:'true'(and round:'true' frosting:'true' fried:'false'))")}"
+            end
+
+            it { subject }
+          end
+        end
+
+        context "search for all results using matchall" do
+          let(:query) do
+            CGI.escape("(and matchall (or is_donut:'true'(and round:'true' frosting:'true' fried:'false')))")
+          end
+          let(:filter) do
+            { or: { is_donut: true, and: { round: true, frosting: true, fried: false } } }
+          end
+
+          before { HTTParty.should_receive(:get).with("#{url_base}/#{api_version}/search?q=#{query}#{options}") }
+
+          subject { @asari.search("nom", filter: filter, matchall: true) }
+
+          it { subject }
+        end
+
         context "use array or elements as filter for date fields" do
           let(:query) do
             CGI.escape("(and 'nom' publication_date:['2015-01-01T00:00:01Z', '2015-02-01T10:00:00Z'])")

@@ -247,18 +247,23 @@ class Asari
 
   def build_query(term, options)
     bq = boolean_query(options[:filter]) if options[:filter]
+    sq = boolean_query(options[:simple_filter]) if options[:simple_filter]
     fs = build_facet_string(options[:facets]) if options[:facets]
 
     query = ""
     if api_version == '2013-01-01'
-      if options[:filter] and term != ""
-        query += "?q=#{CGI.escape("(and '#{term.to_s}' #{bq})")}"
-        query += "&q.parser=structured"
-      elsif options[:filter]
-        query += "?q=#{CGI.escape(bq)}"
+      if options[:filter]
+        if options[:matchall]
+          query += "?q=#{CGI.escape("(and matchall #{bq})")}"
+        elsif term.present?
+          query += "?q=#{CGI.escape("(and '#{term.to_s}' #{bq})")}"
+        else
+          query += "?q=#{CGI.escape(bq)}"
+        end
         query += "&q.parser=structured"
       else
         query += "?q=#{CGI.escape(term.to_s)}"
+        query += "&fq=#{CGI.escape(sq)}" if options[:simple_filter]
       end
       query += "&#{fs}" if options[:facets]
     else

@@ -160,6 +160,20 @@ describe Asari do
           })
         end
 
+        context "use array or elements as filter for date fields" do
+          let(:query) do
+            CGI.escape("(and 'nom' publication_date:['2015-01-01T00:00:01Z', '2015-02-01T10:00:00Z'])")
+          end
+          let(:filter) do
+            { publication_date: ["2015-01-01T00:00:01Z", "2015-02-01T10:00:00Z"] }
+          end
+
+          before { HTTParty.should_receive(:get).with("#{url_base}/#{api_version}/search?q=#{query}#{options}") }
+          subject { @asari.search("nom", filter: filter) }
+
+          it { subject }
+        end
+
         context "use multiple values for 'or'" do
           let(:query) do
             CGI.escape("(and 'nom' (or categories:'Painting' categories:'Sculpture'))")

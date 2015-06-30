@@ -1,3 +1,3 @@
 class Asari
-  VERSION = "0.10.4"
+  VERSION = "1.1.0"
 end

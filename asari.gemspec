@@ -10,7 +10,7 @@ Gem::Specification.new do |s|
   s.license     = "MIT"
   s.homepage    = "http://github.com/duwanis/asari"
   s.summary     = %q{Asari is a Ruby interface for AWS CloudSearch.}
-  s.description = %q{Asari s a Ruby interface for AWS CloudSearch}
+  s.description = %q{Asari is a Ruby interface for AWS CloudSearch.}
 
   s.rubyforge_project = "asari"
 
@@ -35,6 +35,6 @@ Gem::Specification.new do |s|
   if RUBY_ENGINE == 'jruby'
     s.add_development_dependency "activerecord-jdbcsqlite3-adapter"
   else
-    s.add_development_dependency "sqlite3" 
+    s.add_development_dependency "sqlite3"
   end
 end

@@ -83,6 +83,7 @@ class Asari
     url += "&size=#{page_size}"
     url += return_fields_options(options)
     url += page_options(options)
+    url += expression_options(options)
     url += rank_options(options)
     url += field_weights_options(options)
 
@@ -238,7 +239,7 @@ class Asari
     rank = Array(rank)
     rank << :asc if rank.size < 2
 
-    if api_version == '2013-01-01'
+    if api_version == API_VERSION_2013
       "#{rank[0]} #{rank[1]}"
     else
       rank[1] == :desc ? "-#{rank[0]}" : rank[0]
@@ -304,21 +305,30 @@ class Asari
     options[:page_size].to_i
   end
 
+  def expression_options(options)
+    return "" unless options[:expression]
+
+    expr = options[:expression]
+    # change default rank to expression
+    options[:rank] = [:expr1, :desc]
+
+    "&expr.expr1=#{CGI.escape(expr)}"
+  end
+
   def rank_options(options)
     return "" unless options[:rank]
 
     rank = normalize_rank(options[:rank])
-    rank_or_sort = api_version == '2013-01-01' ? 'sort' : 'rank'
+    rank_or_sort = api_version == API_VERSION_2013 ? 'sort' : 'rank'
     "&#{rank_or_sort}=#{CGI.escape(rank)}"
   end
 
   def return_fields_options(options)
     return ""  unless options[:return_fields]
 
-    return_statement = api_version == '2013-01-01' ? 'return' : 'return-fields'
+    return_statement = api_version == API_VERSION_2013 ? 'return' : 'return-fields'
     "&#{return_statement}=#{options[:return_fields].join ','}"
   end
-
 end
 
 Asari.mode = :sandbox # default to sandbox

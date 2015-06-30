@@ -246,6 +246,29 @@ describe Asari do
         end
       end
 
+      describe "use expressions to modify results" do
+        let(:query) do
+          CGI.escape("(and 'nom' (and foo:'bar' baz:'bug'))")
+        end
+        let(:expr) do
+          "&expr.expr1=" + CGI.escape("(0.3*popularity)+(0.7*_score)") + "&sort=expr1+desc"
+        end
+        let(:filter) { { and: { foo: "bar", baz: "bug" } } }
+        let(:expression) { "(0.3*popularity)+(0.7*_score)" }
+        let(:rank) { nil }
+
+        before { HTTParty.should_receive(:get).with("#{url_base}/#{api_version}/search?q=#{query}#{options}#{expr}") }
+        subject { @asari.search("nom", expression: expression, filter: filter, rank: rank) }
+
+        it { subject }
+
+        context "when rank option is present" do
+          let(:rank) { ["some_field", :desc] }
+
+          it { subject }
+        end
+      end
+
       describe "the rank option" do
         it "takes a plain string" do
           HTTParty.should_receive(:get).with("#{url_base}/#{api_version}/search?q=testsearch&size=10&sort=some_field+asc")

@@ -6,7 +6,7 @@ module ActiveAsari
   end
 
   def self.aws_client
-    AWS::CloudSearch::Client::V20130101.new
+    Aws::CloudSearch::Client::V20130101.new
   end
 
   def self.asari_domain_name(domain)

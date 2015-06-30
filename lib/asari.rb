@@ -15,6 +15,10 @@ class Asari
   # we need all facets, so we guess it's big enough
   MAX_FACETS_SIZE = 999
 
+  # CloudSearch API versions
+  API_VERSION_2011 = "2011-02-01"
+  API_VERSION_2013 = "2013-01-01"
+
   def self.mode
     @@mode
   end
@@ -27,9 +31,10 @@ class Asari
   attr_writer :search_domain
   attr_writer :aws_region
 
-  def initialize(search_domain=nil, aws_region=nil)
+  def initialize(search_domain = nil, aws_region = nil, api_version = nil)
     @search_domain = search_domain
     @aws_region = aws_region
+    @api_version = api_version
   end
 
   # Public: returns the current search_domain, or raises a
@@ -44,7 +49,7 @@ class Asari
   # CloudSearch API).
   #
   def api_version
-    @api_version || ENV['CLOUDSEARCH_API_VERSION'] || "2011-02-01"
+    @api_version || ENV['CLOUDSEARCH_API_VERSION'] || API_VERSION_2011
   end
 
   # Public: returns the current aws_region, or the sensible default of
@@ -251,7 +256,7 @@ class Asari
     fs = build_facet_string(options[:facets]) if options[:facets]
 
     query = ""
-    if api_version == '2013-01-01'
+    if api_version == API_VERSION_2013
       if options[:filter]
         if options[:matchall]
           query += "?q=#{CGI.escape("(and matchall #{bq})")}"

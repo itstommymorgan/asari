@@ -12,7 +12,6 @@ Dir[File.dirname(__FILE__) + "/../lib/active_asari/*.rb"].each {|file| require f
 require 'active_asari'
 ACTIVE_ASARI_CONFIG, ACTIVE_ASARI_ENV = ActiveAsari.configure(File.dirname(__FILE__))
 require 'active_asari/active_record'
-require 'aws'
 require 'active_asari/model/test_model'
 require 'active_asari/model/create_test_model'
 require 'active_asari/hasher'

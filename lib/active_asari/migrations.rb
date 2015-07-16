@@ -4,7 +4,7 @@ module ActiveAsari
     attr_accessor :connection
 
     def initialize 
-      self.connection = AWS::CloudSearch::Client::V20130101.new
+      self.connection = Aws::CloudSearch::Client::V20130101.new
     end
 
     def migrate_all

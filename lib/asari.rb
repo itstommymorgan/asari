@@ -1,3 +1,5 @@
+require 'aws-sdk-resources'
+
 require "asari/version"
 
 require "asari/collection"
@@ -11,6 +13,14 @@ require "json"
 require "cgi"
 
 class Asari
+  # CloudSearch requires bucket size, so we provide fixed number
+  # we need all facets, so we guess it's big enough
+  MAX_FACETS_SIZE = 999
+
+  # CloudSearch API versions
+  API_VERSION_2011 = "2011-02-01"
+  API_VERSION_2013 = "2013-01-01"
+
   def self.mode
     @@mode
   end
@@ -23,9 +33,10 @@ class Asari
   attr_writer :search_domain
   attr_writer :aws_region
 
-  def initialize(search_domain=nil, aws_region=nil)
+  def initialize(search_domain = nil, aws_region = nil, api_version = nil)
     @search_domain = search_domain
     @aws_region = aws_region
+    @api_version = api_version
   end
 
   # Public: returns the current search_domain, or raises a
@@ -40,7 +51,7 @@ class Asari
   # CloudSearch API).
   #
   def api_version
-    @api_version || ENV['CLOUDSEARCH_API_VERSION'] || "2011-02-01" 
+    @api_version || ENV['CLOUDSEARCH_API_VERSION'] || API_VERSION_2011
   end
 
   # Public: returns the current aws_region, or the sensible default of
@@ -67,37 +78,16 @@ class Asari
     return Asari::Collection.sandbox_fake if self.class.mode == :sandbox
     term,options = "",term if term.is_a?(Hash) and options.empty?
 
-    bq = boolean_query(options[:filter]) if options[:filter]
-    page_size = options[:page_size].nil? ? 10 : options[:page_size].to_i
+    page_size = page_size_options(options)
 
     url = "http://search-#{search_domain}.#{aws_region}.cloudsearch.amazonaws.com/#{api_version}/search"
-
-    if api_version == '2013-01-01'
-      if options[:filter]
-        url += "?q=#{CGI.escape(bq)}"
-        url += "&q.parser=structured"
-      else
-        url += "?q=#{CGI.escape(term.to_s)}"
-      end
-    else
-      url += "?q=#{CGI.escape(term.to_s)}"
-      url += "&bq=#{CGI.escape(bq)}" if options[:filter]
-    end
-
-    return_statement = api_version == '2013-01-01' ? 'return' : 'return-fields'
+    url += build_query(term, options)
     url += "&size=#{page_size}"
-    url += "&#{return_statement}=#{options[:return_fields].join ','}" if options[:return_fields]
-
-    if options[:page]
-      start = (options[:page].to_i - 1) * page_size
-      url << "&start=#{start}"
-    end
-
-    if options[:rank]
-      rank = normalize_rank(options[:rank])
-      rank_or_sort = api_version == '2013-01-01' ? 'sort' : 'rank'
-      url << "&#{rank_or_sort}=#{CGI.escape(rank)}"
-    end
+    url += return_fields_options(options)
+    url += page_options(options)
+    url += expression_options(options)
+    url += rank_options(options)
+    url += field_weights_options(options)
 
     begin
       response = HTTParty.get(url)
@@ -225,9 +215,16 @@ class Asari
         if %w(and or not).include?(key.to_s) && value.is_a?(Hash)
           sub_query = reduce.call(value)
           memo += "(#{key}#{sub_query})" unless sub_query.empty?
+        elsif key.to_s.match(/.*_or/) && value.is_a?(Hash)
+          sub_query = value.map do |or_key, or_value|
+            Array(or_value).map { |v| " #{or_key}:'#{v}'" }.join
+          end.join
+          memo += " (or#{sub_query})" unless sub_query.empty?
         else
           if value.is_a?(Range) || value.is_a?(Integer)
             memo += " #{key}:#{value}"
+          elsif value.is_a?(Array)
+            memo += " #{key}:#{value}".gsub('"',"'")
           else
             memo += " #{key}:'#{value}'" unless value.to_s.empty?
           end
@@ -241,8 +238,8 @@ class Asari
   def normalize_rank(rank)
     rank = Array(rank)
     rank << :asc if rank.size < 2
-    
-    if api_version == '2013-01-01'
+
+    if api_version == API_VERSION_2013
       "#{rank[0]} #{rank[1]}"
     else
       rank[1] == :desc ? "-#{rank[0]}" : rank[0]
@@ -254,6 +251,84 @@ class Asari
     obj.to_time.to_i
   end
 
+  def build_query(term, options)
+    bq = boolean_query(options[:filter]) if options[:filter]
+    sq = boolean_query(options[:simple_filter]) if options[:simple_filter]
+    fs = build_facet_string(options[:facets]) if options[:facets]
+
+    query = ""
+    if api_version == API_VERSION_2013
+      if options[:filter]
+        if options[:matchall]
+          query += "?q=#{CGI.escape("(and matchall #{bq})")}"
+        elsif term.present?
+          query += "?q=#{CGI.escape("(and '#{term.to_s}' #{bq})")}"
+        else
+          query += "?q=#{CGI.escape(bq)}"
+        end
+        query += "&q.parser=structured"
+      else
+        query += "?q=#{CGI.escape(term.to_s)}"
+        query += "&fq=#{CGI.escape(sq)}" if options[:simple_filter]
+      end
+      query += "&#{fs}" if options[:facets]
+    else
+      query = "?q=#{CGI.escape(term.to_s)}"
+      query += "&bq=#{CGI.escape(bq)}" if options[:filter]
+    end
+    query
+  end
+
+  def build_facet_string(facets)
+    escaped_braces = CGI.escape("{sort:'bucket',size:#{MAX_FACETS_SIZE}}")
+    facets.map { |f| "facet.#{f}=#{escaped_braces}" }.join("&")
+  end
+
+  def field_weights_options(options)
+    return "" unless options[:field_weights]
+
+    weights = options[:field_weights].map { |key, value| "\'#{key}^#{value}\'" }.join(",")
+    weights_string = CGI.escape("{fields:[#{weights}]}")
+    "&q.options=#{weights_string}"
+  end
+
+  def page_options(options)
+    return "" unless options[:page]
+
+    start = (options[:page].to_i - 1) * page_size_options(options)
+    "&start=#{start}"
+  end
+
+  def page_size_options(options)
+    return 10 unless options[:page_size]
+
+    options[:page_size].to_i
+  end
+
+  def expression_options(options)
+    return "" unless options[:expression]
+
+    expr = options[:expression]
+    # change default rank to expression
+    options[:rank] = [:expr1, :desc]
+
+    "&expr.expr1=#{CGI.escape(expr)}"
+  end
+
+  def rank_options(options)
+    return "" unless options[:rank]
+
+    rank = normalize_rank(options[:rank])
+    rank_or_sort = api_version == API_VERSION_2013 ? 'sort' : 'rank'
+    "&#{rank_or_sort}=#{CGI.escape(rank)}"
+  end
+
+  def return_fields_options(options)
+    return ""  unless options[:return_fields]
+
+    return_statement = api_version == API_VERSION_2013 ? 'return' : 'return-fields'
+    "&#{return_statement}=#{options[:return_fields].join ','}"
+  end
 end
 
 Asari.mode = :sandbox # default to sandbox

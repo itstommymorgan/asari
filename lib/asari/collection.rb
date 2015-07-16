@@ -13,6 +13,7 @@ class Asari
     attr_reader :page_size
     attr_reader :total_entries
     attr_reader :total_pages
+    attr_reader :facets
 
     # Internal: method for returning a sandbox-friendly empty search result.
     #
@@ -31,7 +32,10 @@ class Asari
     #
     def initialize(httparty_response, page_size)
       resp = httparty_response.parsed_response
-      @total_entries = resp["hits"]["found"]
+      @facets = resp["facets"] if resp["facets"]
+
+      hits = resp["hits"]
+      @total_entries = hits["found"]
       @page_size = page_size
 
       complete_pages = (@total_entries / @page_size)
@@ -39,16 +43,18 @@ class Asari
       # There's always one page, even for no results
       @total_pages = 1 if @total_pages == 0
 
-      start = resp["hits"]["start"]
+      start = hits["start"]
+      hit = hits["hit"]
       @current_page = (start / page_size) + 1
-      if resp["hits"]["hit"].first && resp["hits"]["hit"].first["data"]
+
+      if hit.first && hit.first["data"]
         @data = {}
-        resp["hits"]["hit"].each { |hit|  @data[hit["id"]] = hit["data"]}
-      elsif resp["hits"]["hit"].first && resp["hits"]["hit"].first["fields"]
+        hit.each { |hit|  @data[hit["id"]] = hit["data"]}
+      elsif hit.first && hit.first["fields"]
         @data = {}
-        resp["hits"]["hit"].each { |hit|  @data[hit["id"]] = hit["fields"]}
+        hit.each { |hit|  @data[hit["id"]] = hit["fields"]}
       else
-        @data = resp["hits"]["hit"].map { |hit| hit["id"] }
+        @data = hit.map { |hit| hit["id"] }
       end
     end
 

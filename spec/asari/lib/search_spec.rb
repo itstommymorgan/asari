@@ -203,7 +203,7 @@ describe Asari do
 
         context "use array or elements as filter for date fields" do
           let(:query) do
-            CGI.escape("(and 'nom' publication_date:['2015-01-01T00:00:01Z', '2015-02-01T10:00:00Z'])")
+            CGI.escape("(and 'nom'  publication_date:['2015-01-01T00:00:01Z', '2015-02-01T10:00:00Z'])")
           end
           let(:filter) do
             { publication_date: ["2015-01-01T00:00:01Z", "2015-02-01T10:00:00Z"] }
@@ -217,7 +217,7 @@ describe Asari do
 
         context "use multiple values for 'or'" do
           let(:query) do
-            CGI.escape("(and 'nom' (or categories:'Painting' categories:'Sculpture'))")
+            CGI.escape("(and 'nom'  (or categories:'Painting' categories:'Sculpture'))")
           end
           let(:filter) do
             {
@@ -232,7 +232,7 @@ describe Asari do
 
           context "use multiple 'or' options" do
             let(:query) do
-              CGI.escape("(and 'nom' (or categories:'Painting' categories:'Sculpture') (or types:'Art' types:'Writing'))")
+              CGI.escape("(and 'nom'  (or categories:'Painting' categories:'Sculpture') (or types:'Art' types:'Writing'))")
             end
             let(:filter) do
               {

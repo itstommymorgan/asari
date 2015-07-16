@@ -219,14 +219,12 @@ class Asari
           sub_query = value.map do |or_key, or_value|
             Array(or_value).map { |v| " #{or_key}:'#{v}'" }.join
           end.join
-          memo += " " unless memo.empty?
-          memo += "(or#{sub_query})" unless sub_query.empty?
+          memo += " (or#{sub_query})" unless sub_query.empty?
         else
           if value.is_a?(Range) || value.is_a?(Integer)
             memo += " #{key}:#{value}"
           elsif value.is_a?(Array)
-            memo += " " unless memo.empty?
-            memo += "#{key}:#{value}".gsub('"',"'")
+            memo += " #{key}:#{value}".gsub('"',"'")
           else
             memo += " #{key}:'#{value}'" unless value.to_s.empty?
           end

@@ -73,8 +73,12 @@ class Asari
       ::Asari::Collection
     end
 
+    def respond_to?(method, include_all = false)
+      @data.respond_to?(method, false)
+    end
+
     def method_missing(method, *args, &block)
-      @data.send(method, *args, &block)
+      @data.public_send(method, *args, &block)
     end
   end
 end

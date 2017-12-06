@@ -2,7 +2,7 @@ require_relative '../spec_helper'
 
 describe Asari do
   describe Asari::Collection do
-    before :each do  
+    before :each do
       response = OpenStruct.new(:parsed_response => { "hits" => { "found" => 10, "start" => 0, "hit" => ["1","2"]}})
       @collection = Asari::Collection.new(response, 2)
     end
@@ -25,6 +25,10 @@ describe Asari do
 
     it "calculates the offset correctly" do
       expect(@collection.offset).to eq(0)
+    end
+
+    it "gracefully handles Marshaling" do
+      expect { Marshal.dump @collection }.not_to raise_error
     end
   end
 end

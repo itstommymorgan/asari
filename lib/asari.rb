@@ -207,7 +207,7 @@ class Asari
       hash.reduce("") do |memo, (key, value)|
         if %w(and or not).include?(key.to_s) && value.is_a?(Hash)
           sub_query = reduce.call(value)
-          memo += "(#{key}#{sub_query})" unless sub_query.empty?
+          memo += " (#{key}#{sub_query})" unless sub_query.empty?
         else
           if value.is_a?(Range) || value.is_a?(Integer)
             memo += " #{key}:#{value}"
